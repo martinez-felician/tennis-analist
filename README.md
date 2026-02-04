@@ -9,3 +9,9 @@ This project is in the planning and setup phase.
 
 Next steps: system design, including database schema, UI wireframes, and scoring logic.
 
+### Project Status – Week 2
+Week 2 focused on system design:
+- Database schema created for players, matches, points, and stats
+- Tennis scoring logic flowchart designed
+- UI wireframes created for match input, dashboard, and history screens
+- Data flow mapped from frontend to backend to database
