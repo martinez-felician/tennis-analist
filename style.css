@@ -866,3 +866,86 @@ nav { display: flex; gap: 6px; }
     .section-title,
     .stat-card.overview-card { max-width: 700px; }
 }
+
+/* ── DESKTOP (≥ 900px) ──────────────────────── */
+@media (min-width: 900px) {
+
+    .view { padding: 40px 56px 60px; }
+
+    /* ─ Tracker: left = scoreboard, right = step ─ */
+    #view-tracker.active {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        column-gap: 56px;
+        align-items: start;
+    }
+
+    #view-tracker .scoreboard-players,
+    #view-tracker .scoreboard-card {
+        grid-column: 1;
+        max-width: none;
+        width: 100%;
+    }
+
+    #view-tracker .serve-status {
+        grid-column: 1;
+        justify-self: start;
+    }
+
+    #view-tracker .scoreboard-card {
+        margin-top: 4px;
+    }
+
+    #view-tracker #step-0,
+    #view-tracker #step-1,
+    #view-tracker #step-2 {
+        grid-column: 2;
+        grid-row: 1 / 5;
+        max-width: none;
+        width: 100%;
+        justify-content: center;
+    }
+
+    #view-tracker #toast { grid-column: 1 / -1; }
+
+    /* 3-column method grid on desktop */
+    .method-grid { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* Larger outcome and serve buttons */
+    .outcome-btn { padding: 40px 24px; }
+    .serve-choice .outcome-btn { padding: 28px 24px; }
+
+    /* ─ Stats: 3-column grid ─ */
+    #view-stats.active {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        column-gap: 24px;
+        align-items: start;
+    }
+
+    #view-stats .section-title  { grid-column: 1 / -1; max-width: none; }
+    #view-stats .overview-card  { grid-column: 1 / -1; max-width: none; }
+    #view-stats .stats-row      { display: contents; }
+    #view-stats .stat-card      { max-width: none; }
+    #view-stats .reset-btn      { grid-column: 1 / -1; }
+
+    /* ─ Insights: 2-column sessions ─ */
+    #view-insights .section-title  { max-width: none; }
+    #view-insights .insights-empty { max-width: none; }
+
+    .insights-content-wrap {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: start;
+        max-width: none;
+        width: 100%;
+    }
+
+    .plan-summary { grid-column: 1 / -1; max-width: none; }
+    .plan-session { max-width: none; }
+
+    /* ─ Setup: wider and 2-column fields ─ */
+    .setup-card { max-width: 620px; }
+    .setup-opts { flex-wrap: nowrap; }
+}
