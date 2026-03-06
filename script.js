@@ -1,7 +1,11 @@
 // --- State ---
-let matchConfig = { playerName: 'Player', sets: 3, gamesPerSet: 6, deuce: true, finalSetTiebreak: false, tiebreakLength: 7 };
+let matchConfig = { playerName: 'Player', sets: 3, gamesPerSet: 6, deuce: true, tiebreak: true, finalSetTiebreak: false, tiebreakLength: 7, startServing: true };
 let inTiebreak = false;
 let matchOver = false;
+let isServing = true;
+let currentServeType = null;
+let tiebreakPointCount = 0;
+let servingBeforeTiebreak = true;
 
 let player1Points = 0;
 let player2Points = 0;
@@ -15,7 +19,13 @@ let stats = {
   // wins
   ace: 0, 'fh-win': 0, 'bh-win': 0, vol: 0, oh: 0, drop: 0, 'opp-err': 0,
   // losses
-  df: 0, 'fh-ue': 0, 'bh-ue': 0, 'fh-fe': 0, 'bh-fe': 0, 'opp-win': 0
+  df: 0, 'fh-ue': 0, 'bh-ue': 0, 'fh-fe': 0, 'bh-fe': 0, 'opp-win': 0,
+  // serve & return
+  serve1stIn: 0, serve1stOut: 0, serve2ndIn: 0, returnWon: 0, returnLost: 0,
+  // return-specific
+  'miss-return': 0,
+  // net / touch errors
+  'vol-err': 0, 'oh-err': 0, 'drop-err': 0
 };
 
 const WIN_METHODS = [
@@ -29,12 +39,16 @@ const WIN_METHODS = [
 ];
 
 const LOSS_METHODS = [
-  { key: 'df',      emoji: '⚡', label: 'Double Fault' },
-  { key: 'fh-ue',   emoji: '❌', label: 'FH Unforced Error' },
-  { key: 'bh-ue',   emoji: '❌', label: 'BH Unforced Error' },
-  { key: 'fh-fe',   emoji: '💨', label: 'FH Forced Error' },
-  { key: 'bh-fe',   emoji: '💨', label: 'BH Forced Error' },
-  { key: 'opp-win', emoji: '🎾', label: 'Opponent Winner' },
+  { key: 'df',           emoji: '⚡', label: 'Double Fault' },
+  { key: 'miss-return',  emoji: '🎾', label: 'Miss Return' },
+  { key: 'fh-ue',        emoji: '❌', label: 'Forehand Unforced Error' },
+  { key: 'bh-ue',        emoji: '❌', label: 'Backhand Unforced Error' },
+  { key: 'fh-fe',        emoji: '💨', label: 'Forehand Forced Error' },
+  { key: 'bh-fe',        emoji: '💨', label: 'Backhand Forced Error' },
+  { key: 'opp-win',      emoji: '🏆', label: 'Opponent Winner' },
+  { key: 'vol-err',      emoji: '🏐', label: 'Missed Volley' },
+  { key: 'oh-err',       emoji: '💥', label: 'Missed Overhead' },
+  { key: 'drop-err',     emoji: '🪄', label: 'Missed Drop Shot' },
 ];
 
 // --- Practice Plan Data ---
@@ -296,6 +310,98 @@ const DRILLS = {
       },
     ],
   },
+  'miss-return': {
+    sessionTitle: 'Return of Serve',
+    items: [
+      {
+        name: 'Block Return Drill',
+        duration: '20 min',
+        desc: 'Stand just inside the baseline and practice short, compact block returns deep down the middle. Use the server\'s pace — no full swing.',
+        cue: 'Short backswing. Meet the ball early and redirect it. Getting it back in play beats going for a winner.',
+      },
+      {
+        name: 'Return Placement Targets',
+        duration: '15 min',
+        desc: 'Place cones at the T and wide zones. Return serves aiming for each target alternately. Focus on depth over pace.',
+        cue: 'Pick your target before the serve lands. Commit to it — late decisions cause shanks and misses.',
+      },
+      {
+        name: 'Split-Step Timing',
+        duration: '10 min',
+        desc: 'Practice the split step as the server tosses. Land and explode toward the ball. Good timing is the foundation of a reliable return.',
+        cue: 'Split step as the racket makes contact with the ball. Too early or too late and you will be late on every return.',
+      },
+    ],
+  },
+  'vol-err': {
+    sessionTitle: 'Volley Reliability',
+    items: [
+      {
+        name: 'Close-Range Volley Exchange',
+        duration: '20 min',
+        desc: 'Stand at the service line with a partner doing the same. Exchange volleys continuously, keeping the ball in play. Focus on compact punches with a firm wrist.',
+        cue: 'No backswing. The volley is a punch, not a swing. Use the incoming pace and redirect.',
+      },
+      {
+        name: 'Feed and Volley Approach',
+        duration: '15 min',
+        desc: 'Have a partner feed short balls. Move forward, hit a deep volley, and recover to the net position for a finish. Repeat 20 times.',
+        cue: 'Stay low on the approach. Bend your knees — volleying upright kills your control.',
+      },
+      {
+        name: 'Pressure Volley Simulation',
+        duration: '10 min',
+        desc: 'Play points starting at the net. Focus on keeping the first volley deep and the second volley away. Don\'t go for winners too early.',
+        cue: 'The first volley is about control and depth, not the winner. Set it up with the second.',
+      },
+    ],
+  },
+  'oh-err': {
+    sessionTitle: 'Overhead Execution',
+    items: [
+      {
+        name: 'Lob and Smash Drill',
+        duration: '20 min',
+        desc: 'Have a partner lob repeatedly from the baseline. Move back quickly, position under the ball, and smash to open areas of the court.',
+        cue: 'Point at the ball with your free hand as it rises — this automatically sets your footwork and shoulder turn.',
+      },
+      {
+        name: 'Footwork-First Overhead',
+        duration: '15 min',
+        desc: 'Practise moving back using small crossover steps before hitting. The most common overhead error is poor positioning, not a bad swing.',
+        cue: 'Get behind the ball, not under it. Contact should be slightly in front of your body, not directly above your head.',
+      },
+      {
+        name: 'Deep Lob Recovery',
+        duration: '10 min',
+        desc: 'When the lob is too deep to smash, practice turning and hitting a topspin ball off the bounce rather than forcing a difficult overhead.',
+        cue: 'Know when to let it bounce. A safe topspin reply is better than a shanked overhead on the retreat.',
+      },
+    ],
+  },
+  'drop-err': {
+    sessionTitle: 'Drop Shot Execution',
+    items: [
+      {
+        name: 'Touch Drill at the Net',
+        duration: '15 min',
+        desc: 'Stand just behind the service line and practice soft, sliced drop shots that land just over the net with backspin. Aim to bounce twice before the service line.',
+        cue: 'Open the racket face and slide under the ball. Less pace than you think — let the slice do the work.',
+      },
+      {
+        name: 'Drop Shot From Rally',
+        duration: '20 min',
+        desc: 'Rally crosscourt and execute a drop shot on the 5th ball. The preparation must look identical to a normal groundstroke — disguise is everything.',
+        cue: 'If your opponent can read it before you hit it, they will run it down every time. Disguise first, touch second.',
+      },
+      {
+        name: 'Drop Shot and Follow-In',
+        duration: '10 min',
+        desc: 'After every drop shot, immediately move to the net to put away the reply. A drop shot that you don\'t follow in gives your opponent time to recover.',
+        cue: 'Hit and move. The drop shot is a setup shot — you must finish the point at the net.',
+      },
+    ],
+  },
 };
 
 function generatePracticePlan(weaknesses, strengths) {
@@ -421,7 +527,15 @@ function switchView(view) {
 // --- Step 1: Outcome ---
 function selectOutcome(won) {
   currentOutcome = won;
-  const methods = won ? WIN_METHODS : LOSS_METHODS;
+  let methods = won ? [...WIN_METHODS] : [...LOSS_METHODS];
+  if (won) {
+    if (!isServing) methods = methods.filter(m => m.key !== 'ace');
+  } else {
+    // df is handled by the Double Fault button in step-0, never comes through here
+    methods = methods.filter(m => m.key !== 'df');
+    // miss-return is only valid when returning
+    if (isServing) methods = methods.filter(m => m.key !== 'miss-return');
+  }
   const grid = document.getElementById('method-grid');
   grid.innerHTML = '';
   methods.forEach(m => {
@@ -440,23 +554,39 @@ function selectOutcome(won) {
 function goBack() {
   document.getElementById('step-2').classList.remove('active');
   document.getElementById('step-1').classList.add('active');
+  document.getElementById('step1-back-row').style.display = isServing ? 'block' : 'none';
 }
 
 // --- Step 2: Method ---
 function selectMethod(key) {
   stats[key] = (stats[key] || 0) + 1;
+
+  if (isServing) {
+    if (currentServeType === '1st') {
+      stats.serve1stIn++;
+    } else if (currentServeType === '2nd') {
+      stats.serve1stOut++; // 1st serve faulted → 2nd serve went in
+      stats.serve2ndIn++;
+    }
+  } else {
+    if (currentOutcome) { stats.returnWon++; } else { stats.returnLost++; }
+  }
+
+  currentServeType = null;
   addPoint(currentOutcome);
-  goBack();
+  showInitialStep();
 }
 
 // --- Scoring ---
 function addPoint(playerWon) {
   if (matchOver) return;
-  if (playerWon) {
-    player1Points++;
-  } else {
-    player2Points++;
+  if (playerWon) { player1Points++; } else { player2Points++; }
+
+  if (inTiebreak) {
+    tiebreakPointCount++;
+    if (tiebreakPointCount % 2 === 1) { isServing = !isServing; }
   }
+
   checkGameWinner();
   updateScore();
 }
@@ -486,6 +616,7 @@ function winGame(playerWon) {
   if (playerWon) { player1Games++; } else { player2Games++; }
   player1Points = 0;
   player2Points = 0;
+  isServing = !isServing; // serve alternates each game
   checkSetWinner();
 }
 
@@ -494,8 +625,11 @@ function checkSetWinner() {
   const isLastSet = (player1Sets + player2Sets) === matchConfig.sets - 1;
 
   if (player1Games === g && player2Games === g) {
-    if (!isLastSet || matchConfig.finalSetTiebreak) {
+    if (matchConfig.tiebreak && (!isLastSet || matchConfig.finalSetTiebreak)) {
+      servingBeforeTiebreak = isServing;
       inTiebreak = true;
+      tiebreakPointCount = 0;
+      isServing = !isServing; // returner serves first in tiebreak
       player1Points = 0;
       player2Points = 0;
       showToast('Tie-break!');
@@ -518,6 +652,8 @@ function winSet(playerWon) {
 
 function winTiebreak(playerWon) {
   inTiebreak = false;
+  tiebreakPointCount = 0;
+  isServing = servingBeforeTiebreak; // original server starts next set
   if (playerWon) { player1Sets++; } else { player2Sets++; }
   player1Games = 0;
   player2Games = 0;
@@ -534,6 +670,7 @@ function checkMatchWinner(playerWon) {
     matchOver = true;
     const name = playerWon ? matchConfig.playerName : 'Opponent';
     showToast(name + ' won the match!');
+    setTimeout(() => switchView('stats'), 2500);
   }
 }
 
@@ -547,7 +684,7 @@ function getPointDisplay(p1, p2) {
   }
   if (p1 >= 3 && p2 >= 3) {
     if (p1 === p2) return 'Deuce';
-    return p1 > p2 ? 'Adv. You' : 'Adv. Opponent';
+    return p1 > p2 ? 'Advantage You' : 'Advantage Opponent';
   }
   return (labels[p1] ?? 40) + ' \u2013 ' + (labels[p2] ?? 40);
 }
@@ -556,6 +693,13 @@ function updateScore() {
   document.getElementById('sets').textContent = player1Sets + ' \u2013 ' + player2Sets;
   document.getElementById('games').textContent = player1Games + ' \u2013 ' + player2Games;
   document.getElementById('points').textContent = getPointDisplay(player1Points, player2Points);
+
+  const statusEl = document.getElementById('serve-status');
+  const statusTextEl = document.getElementById('serve-status-text');
+  if (statusEl && statusTextEl) {
+    statusTextEl.textContent = isServing ? 'Serving' : 'Returning';
+    statusEl.className = 'serve-status ' + (isServing ? 'serving' : 'returning');
+  }
 }
 
 // --- Stats ---
@@ -578,6 +722,13 @@ function updateStats() {
     const el = document.getElementById('s-' + key);
     if (el) el.textContent = stats[key];
   });
+
+  const s1Total = stats.serve1stIn + stats.serve1stOut;
+  const s2Total = stats.serve2ndIn + stats.df;
+  const retTotal = stats.returnWon + stats.returnLost;
+  document.getElementById('s-serve1-pct').textContent = s1Total > 0 ? Math.round((stats.serve1stIn / s1Total) * 100) + '%' : '—';
+  document.getElementById('s-serve2-pct').textContent = s2Total > 0 ? Math.round((stats.serve2ndIn / s2Total) * 100) + '%' : '—';
+  document.getElementById('s-return-pct').textContent = retTotal > 0 ? Math.round((stats.returnWon / retTotal) * 100) + '%' : '—';
 }
 
 // --- Toast ---
@@ -595,6 +746,11 @@ function selectOpt(btn) {
   const group = btn.closest('[data-group]').dataset.group;
   btn.closest('[data-group]').querySelectorAll('.setup-opt').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  if (group === 'tiebreak') {
+    const hasTiebreak = btn.dataset.value === 'yes';
+    document.getElementById('field-finalset').style.display = hasTiebreak ? 'flex' : 'none';
+    document.getElementById('field-tblength').style.display = 'none';
+  }
   if (group === 'finalset') {
     document.getElementById('field-tblength').style.display = btn.dataset.value === 'tiebreak' ? 'flex' : 'none';
   }
@@ -608,12 +764,51 @@ function startMatch() {
   matchConfig.sets = parseInt(getVal('sets')) || 3;
   matchConfig.gamesPerSet = parseInt(getVal('games')) || 6;
   matchConfig.deuce = getVal('deuce') !== 'no';
+  matchConfig.tiebreak = getVal('tiebreak') !== 'no';
   matchConfig.finalSetTiebreak = getVal('finalset') === 'tiebreak';
   matchConfig.tiebreakLength = parseInt(getVal('tblength')) || 7;
+  matchConfig.startServing = getVal('role') !== 'returning';
 
+  isServing = matchConfig.startServing;
   document.getElementById('scoreboard-player').textContent = matchConfig.playerName;
   document.getElementById('view-setup').style.display = 'none';
   updateScore();
+  showInitialStep();
+}
+
+function selectServe(type) {
+  if (type === 'df') {
+    // Double fault: 1st serve faulted, 2nd serve faulted — point lost immediately
+    stats.df = (stats.df || 0) + 1;
+    stats.serve1stOut++;
+    currentServeType = null;
+    addPoint(false);
+    showInitialStep();
+    return;
+  }
+  currentServeType = type;
+  document.getElementById('step-0').classList.remove('active');
+  document.getElementById('step-1').classList.add('active');
+  document.getElementById('step1-back-row').style.display = 'block';
+}
+
+function goBackToServe() {
+  currentServeType = null;
+  document.getElementById('step-1').classList.remove('active');
+  document.getElementById('step-0').classList.add('active');
+  document.getElementById('step1-back-row').style.display = 'none';
+}
+
+function showInitialStep() {
+  document.getElementById('step-2').classList.remove('active');
+  document.getElementById('step-1').classList.remove('active');
+  document.getElementById('step-0').classList.remove('active');
+  document.getElementById('step1-back-row').style.display = 'none';
+  if (isServing) {
+    document.getElementById('step-0').classList.add('active');
+  } else {
+    document.getElementById('step-1').classList.add('active');
+  }
 }
 
 // --- Reset ---
@@ -624,21 +819,33 @@ function resetMatch() {
   player1Sets = 0;   player2Sets = 0;
   inTiebreak = false;
   matchOver = false;
+  isServing = true;
+  currentServeType = null;
+  tiebreakPointCount = 0;
   Object.keys(stats).forEach(k => { stats[k] = 0; });
+
+  // Deactivate all steps
+  document.getElementById('step-0').classList.remove('active');
+  document.getElementById('step-1').classList.remove('active');
+  document.getElementById('step-2').classList.remove('active');
+
   updateScore();
   updateStats();
-  goBack();
 
   // Reset setup screen defaults
   document.querySelectorAll('.setup-opt').forEach(b => b.classList.remove('active'));
   document.querySelector('.setup-opts[data-group="sets"] [data-value="3"]').classList.add('active');
   document.querySelector('.setup-opts[data-group="games"] [data-value="6"]').classList.add('active');
   document.querySelector('.setup-opts[data-group="deuce"] [data-value="yes"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="tiebreak"] [data-value="yes"]').classList.add('active');
   document.querySelector('.setup-opts[data-group="finalset"] [data-value="full"]').classList.add('active');
+  document.getElementById('field-finalset').style.display = 'flex';
   document.querySelector('.setup-opts[data-group="tblength"] [data-value="7"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="role"] [data-value="serving"]').classList.add('active');
   document.getElementById('field-tblength').style.display = 'none';
   document.getElementById('input-name').value = '';
   document.getElementById('view-setup').style.display = 'flex';
+  switchView('tracker');
 }
 
 // --- Init ---

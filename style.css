@@ -754,7 +754,105 @@ nav { display: flex; gap: 6px; }
     font-weight: 600;
 }
 
+/* ── SERVE STATUS INDICATOR ──────────────────── */
+.serve-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    background: var(--elevated);
+    color: var(--muted);
+}
+
+.serve-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+}
+
+.serve-status.serving  { border-color: var(--green); color: var(--green); }
+.serve-status.serving .serve-dot { background: var(--green); }
+.serve-status.returning { border-color: var(--gold); color: var(--gold); }
+.serve-status.returning .serve-dot { background: var(--gold); }
+
+/* ── SERVE SELECTION BUTTONS ─────────────────── */
+.serve1-btn {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e4a80 100%);
+    border-color: #3b82f6;
+}
+
+.serve2-btn {
+    background: linear-gradient(135deg, #3b2800 0%, #5c4000 100%);
+    border-color: var(--gold);
+}
+
+.serve1-btn .serve-num { color: #60a5fa; }
+.serve2-btn .serve-num { color: var(--gold); }
+
+.serve-num {
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.serve-choice {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.df-btn {
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+    border-color: var(--red);
+    padding: 20px;
+}
+
+.df-btn .outcome-icon { color: var(--red); }
+
 /* ── RESPONSIVE ─────────────────────────────── */
+@media (max-width: 480px) {
+    header { padding: 10px 14px; }
+    .brand-name { font-size: 0.9rem; }
+    .brand-icon { font-size: 1.1rem; }
+    .nav-btn { padding: 6px 10px; font-size: 0.78rem; }
+
+    .view { padding: 14px 12px 32px; gap: 14px; }
+
+    .scoreboard-players { font-size: 0.72rem; }
+    .scoreboard-card { padding: 14px 16px; }
+    .score-value { font-size: 1.4rem; }
+    .score-divider { margin: 0 10px; height: 36px; }
+    .score-label { font-size: 0.65rem; }
+
+    .step-question { font-size: 1.05rem; }
+    .outcome-btn { padding: 24px 12px; gap: 10px; }
+    .outcome-icon { font-size: 2.2rem; }
+    .outcome-label { font-size: 1rem; }
+    .serve-num { font-size: 1.5rem; }
+
+    .method-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .method-btn { padding: 16px 8px; gap: 8px; }
+    .method-emoji { font-size: 1.6rem; }
+    .method-label { font-size: 0.78rem; }
+
+    .setup-card { padding: 24px 16px; gap: 18px; }
+    .setup-logo { font-size: 1.3rem; }
+    .setup-opt { padding: 7px 12px; font-size: 0.82rem; }
+    .start-btn { font-size: 0.95rem; }
+
+    .stat-card { padding: 14px; }
+    .section-title { font-size: 1.1rem; }
+}
+
 @media (min-width: 520px) {
     .stats-row {
         flex-direction: row;

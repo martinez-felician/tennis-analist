@@ -29,6 +29,11 @@
             <span>Opponent</span>
         </div>
 
+        <div class="serve-status returning" id="serve-status">
+            <span class="serve-dot"></span>
+            <span id="serve-status-text">Returning</span>
+        </div>
+
         <div class="scoreboard-card">
             <div class="score-col">
                 <div class="score-label">Sets</div>
@@ -46,8 +51,32 @@
             </div>
         </div>
 
+        <!-- Step 0: Serve selection (serving only) -->
+        <div id="step-0" class="step">
+            <p class="step-question">Which serve?</p>
+            <div class="serve-choice">
+                <div class="outcome-row">
+                    <button class="outcome-btn serve1-btn" onclick="selectServe('1st')">
+                        <span class="serve-num">1st</span>
+                        <span class="outcome-label">1st Serve In</span>
+                    </button>
+                    <button class="outcome-btn serve2-btn" onclick="selectServe('2nd')">
+                        <span class="serve-num">2nd</span>
+                        <span class="outcome-label">2nd Serve In</span>
+                    </button>
+                </div>
+                <button class="outcome-btn df-btn" onclick="selectServe('df')">
+                    <span class="outcome-icon">✗✗</span>
+                    <span class="outcome-label">Double Fault</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Step 1: Win or Lose -->
-        <div id="step-1" class="step active">
+        <div id="step-1" class="step">
+            <div id="step1-back-row" style="display:none; width:100%">
+                <button class="back-btn" onclick="goBackToServe()">← Back</button>
+            </div>
             <p class="step-question">Did you win the point?</p>
             <div class="outcome-row">
                 <button class="outcome-btn win-btn" onclick="selectOutcome(true)">
@@ -115,12 +144,23 @@
             <div class="stat-card">
                 <h3 class="stat-card-title red">Errors</h3>
                 <div class="stat-line"><span>Double Fault</span><span class="stat-num" id="s-df">0</span></div>
-                <div class="stat-line"><span>FH Unforced Error</span><span class="stat-num" id="s-fh-ue">0</span></div>
-                <div class="stat-line"><span>BH Unforced Error</span><span class="stat-num" id="s-bh-ue">0</span></div>
-                <div class="stat-line"><span>FH Forced Error</span><span class="stat-num" id="s-fh-fe">0</span></div>
-                <div class="stat-line"><span>BH Forced Error</span><span class="stat-num" id="s-bh-fe">0</span></div>
+                <div class="stat-line"><span>Forehand Unforced Error</span><span class="stat-num" id="s-fh-ue">0</span></div>
+                <div class="stat-line"><span>Backhand Unforced Error</span><span class="stat-num" id="s-bh-ue">0</span></div>
+                <div class="stat-line"><span>Forehand Forced Error</span><span class="stat-num" id="s-fh-fe">0</span></div>
+                <div class="stat-line"><span>Backhand Forced Error</span><span class="stat-num" id="s-bh-fe">0</span></div>
                 <div class="stat-line"><span>Opponent Winner</span><span class="stat-num" id="s-opp-win">0</span></div>
+                <div class="stat-line"><span>Miss Return</span><span class="stat-num" id="s-miss-return">0</span></div>
+                <div class="stat-line"><span>Missed Volley</span><span class="stat-num" id="s-vol-err">0</span></div>
+                <div class="stat-line"><span>Missed Overhead</span><span class="stat-num" id="s-oh-err">0</span></div>
+                <div class="stat-line"><span>Missed Drop Shot</span><span class="stat-num" id="s-drop-err">0</span></div>
             </div>
+        </div>
+
+        <div class="stat-card">
+            <h3 class="stat-card-title" style="color:var(--text)">Serve &amp; Return</h3>
+            <div class="stat-line"><span>1st Serve In</span><span class="stat-num" id="s-serve1-pct">—</span></div>
+            <div class="stat-line"><span>2nd Serve In</span><span class="stat-num" id="s-serve2-pct">—</span></div>
+            <div class="stat-line"><span>Return Points Won</span><span class="stat-num" id="s-return-pct">—</span></div>
         </div>
 
         <button class="reset-btn" onclick="resetMatch()">Reset Match</button>
@@ -173,6 +213,14 @@
         </div>
 
         <div class="setup-field">
+          <label>Tiebreak at 6 – 6</label>
+          <div class="setup-opts" data-group="tiebreak">
+            <button class="setup-opt active" data-value="yes" onclick="selectOpt(this)">Yes</button>
+            <button class="setup-opt" data-value="no" onclick="selectOpt(this)">No</button>
+          </div>
+        </div>
+
+        <div class="setup-field">
           <label>At 40 – 40</label>
           <div class="setup-opts" data-group="deuce">
             <button class="setup-opt active" data-value="yes" onclick="selectOpt(this)">Advantage (Deuce)</button>
@@ -181,6 +229,14 @@
         </div>
 
         <div class="setup-field">
+          <label>Starting As</label>
+          <div class="setup-opts" data-group="role">
+            <button class="setup-opt active" data-value="serving" onclick="selectOpt(this)">Serving</button>
+            <button class="setup-opt" data-value="returning" onclick="selectOpt(this)">Returning</button>
+          </div>
+        </div>
+
+        <div class="setup-field" id="field-finalset">
           <label>Final Set</label>
           <div class="setup-opts" data-group="finalset">
             <button class="setup-opt active" data-value="full" onclick="selectOpt(this)">Full Set</button>
