@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Analyst</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span class="brand-icon">🎾</span>
+            <span class="brand-name">Tennis Analyst</span>
+        </div>
+        <nav>
+            <button class="nav-btn active" id="nav-tracker" onclick="switchView('tracker')">Tracker</button>
+            <button class="nav-btn" id="nav-stats" onclick="switchView('stats')">Stats</button>
+            <button class="nav-btn" id="nav-insights" onclick="switchView('insights')">Insights</button>
+        </nav>
+    </header>
+
+    <!-- TRACKER VIEW -->
+    <main id="view-tracker" class="view active">
+
+        <div class="scoreboard-players">
+            <span id="scoreboard-player">Player</span>
+            <span class="vs-label">vs</span>
+            <span>Opponent</span>
+        </div>
+
+        <div class="scoreboard-card">
+            <div class="score-col">
+                <div class="score-label">Sets</div>
+                <div class="score-value" id="sets">0 – 0</div>
+            </div>
+            <div class="score-divider"></div>
+            <div class="score-col">
+                <div class="score-label">Games</div>
+                <div class="score-value" id="games">0 – 0</div>
+            </div>
+            <div class="score-divider"></div>
+            <div class="score-col">
+                <div class="score-label">Points</div>
+                <div class="score-value" id="points">0 – 0</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Win or Lose -->
+        <div id="step-1" class="step active">
+            <p class="step-question">Did you win the point?</p>
+            <div class="outcome-row">
+                <button class="outcome-btn win-btn" onclick="selectOutcome(true)">
+                    <span class="outcome-icon">✓</span>
+                    <span class="outcome-label">I Won</span>
+                </button>
+                <button class="outcome-btn lose-btn" onclick="selectOutcome(false)">
+                    <span class="outcome-icon">✗</span>
+                    <span class="outcome-label">I Lost</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: How -->
+        <div id="step-2" class="step">
+            <div class="step2-header">
+                <button class="back-btn" onclick="goBack()">← Back</button>
+                <p class="step-question" id="step2-title">How did you win it?</p>
+            </div>
+            <div class="method-grid" id="method-grid"></div>
+        </div>
+
+        <!-- Toast notification -->
+        <div id="toast" class="toast"></div>
+
+    </main>
+
+    <!-- STATS VIEW -->
+    <main id="view-stats" class="view">
+
+        <h2 class="section-title">Match Statistics</h2>
+
+        <div class="stat-card overview-card">
+            <div class="overview-numbers">
+                <div class="overview-num">
+                    <div class="overview-big green" id="stat-won">0</div>
+                    <div class="overview-sub">Points Won</div>
+                </div>
+                <div class="overview-num">
+                    <div class="overview-big red" id="stat-lost">0</div>
+                    <div class="overview-sub">Points Lost</div>
+                </div>
+                <div class="overview-num">
+                    <div class="overview-big gold" id="stat-winrate">—</div>
+                    <div class="overview-sub">Win Rate</div>
+                </div>
+            </div>
+            <div class="winrate-bar-bg">
+                <div class="winrate-bar-fill" id="winrate-bar"></div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <h3 class="stat-card-title green">Winners</h3>
+                <div class="stat-line"><span>Ace</span><span class="stat-num" id="s-ace">0</span></div>
+                <div class="stat-line"><span>Forehand Winner</span><span class="stat-num" id="s-fh-win">0</span></div>
+                <div class="stat-line"><span>Backhand Winner</span><span class="stat-num" id="s-bh-win">0</span></div>
+                <div class="stat-line"><span>Volley Winner</span><span class="stat-num" id="s-vol">0</span></div>
+                <div class="stat-line"><span>Overhead / Smash</span><span class="stat-num" id="s-oh">0</span></div>
+                <div class="stat-line"><span>Drop Shot</span><span class="stat-num" id="s-drop">0</span></div>
+                <div class="stat-line"><span>Opponent Error</span><span class="stat-num" id="s-opp-err">0</span></div>
+            </div>
+
+            <div class="stat-card">
+                <h3 class="stat-card-title red">Errors</h3>
+                <div class="stat-line"><span>Double Fault</span><span class="stat-num" id="s-df">0</span></div>
+                <div class="stat-line"><span>FH Unforced Error</span><span class="stat-num" id="s-fh-ue">0</span></div>
+                <div class="stat-line"><span>BH Unforced Error</span><span class="stat-num" id="s-bh-ue">0</span></div>
+                <div class="stat-line"><span>FH Forced Error</span><span class="stat-num" id="s-fh-fe">0</span></div>
+                <div class="stat-line"><span>BH Forced Error</span><span class="stat-num" id="s-bh-fe">0</span></div>
+                <div class="stat-line"><span>Opponent Winner</span><span class="stat-num" id="s-opp-win">0</span></div>
+            </div>
+        </div>
+
+        <button class="reset-btn" onclick="resetMatch()">Reset Match</button>
+
+    </main>
+
+    <!-- INSIGHTS VIEW -->
+    <main id="view-insights" class="view">
+
+        <h2 class="section-title">Practice Plan</h2>
+
+        <div id="insights-empty" class="insights-empty">
+            <div class="empty-icon">📋</div>
+            <p class="empty-title">Not enough data yet</p>
+            <p class="empty-sub">Play at least 5 points to generate your personalized practice plan.</p>
+        </div>
+
+        <div id="insights-content" class="insights-content-wrap">
+            <!-- filled by renderInsights() -->
+        </div>
+
+    </main>
+
+    <div id="view-setup" class="setup-screen">
+      <div class="setup-card">
+        <div class="setup-logo">🎾 Tennis Analyst</div>
+        <p class="setup-sub">Configure your match</p>
+
+        <div class="setup-field">
+          <label>Your Name</label>
+          <input type="text" id="input-name" placeholder="Enter your name" maxlength="20">
+        </div>
+
+        <div class="setup-field">
+          <label>Match Format</label>
+          <div class="setup-opts" data-group="sets">
+            <button class="setup-opt" data-value="1" onclick="selectOpt(this)">Best of 1</button>
+            <button class="setup-opt active" data-value="3" onclick="selectOpt(this)">Best of 3</button>
+            <button class="setup-opt" data-value="5" onclick="selectOpt(this)">Best of 5</button>
+          </div>
+        </div>
+
+        <div class="setup-field">
+          <label>Games per Set</label>
+          <div class="setup-opts" data-group="games">
+            <button class="setup-opt" data-value="4" onclick="selectOpt(this)">4 games</button>
+            <button class="setup-opt active" data-value="6" onclick="selectOpt(this)">6 games</button>
+            <button class="setup-opt" data-value="8" onclick="selectOpt(this)">8 games</button>
+          </div>
+        </div>
+
+        <div class="setup-field">
+          <label>At 40 – 40</label>
+          <div class="setup-opts" data-group="deuce">
+            <button class="setup-opt active" data-value="yes" onclick="selectOpt(this)">Advantage (Deuce)</button>
+            <button class="setup-opt" data-value="no" onclick="selectOpt(this)">No-Advantage</button>
+          </div>
+        </div>
+
+        <div class="setup-field">
+          <label>Final Set</label>
+          <div class="setup-opts" data-group="finalset">
+            <button class="setup-opt active" data-value="full" onclick="selectOpt(this)">Full Set</button>
+            <button class="setup-opt" data-value="tiebreak" onclick="selectOpt(this)">Tie-Break</button>
+          </div>
+        </div>
+
+        <div class="setup-field" id="field-tblength" style="display:none">
+          <label>Tie-Break Length</label>
+          <div class="setup-opts" data-group="tblength">
+            <button class="setup-opt active" data-value="7" onclick="selectOpt(this)">First to 7</button>
+            <button class="setup-opt" data-value="10" onclick="selectOpt(this)">First to 10</button>
+          </div>
+        </div>
+
+        <button class="start-btn" onclick="startMatch()">Start Match</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
