@@ -187,6 +187,7 @@ def save_match():
 
 # ── Run ───────────────────────────────────────────────────────────────────────
 
+init_db()  # runs on every startup (local dev & PythonAnywhere WSGI)
+
 if __name__ == '__main__':
-    init_db()
     app.run(debug=True, port=5000)
