@@ -670,6 +670,7 @@ function checkMatchWinner(playerWon) {
     matchOver = true;
     const name = playerWon ? matchConfig.playerName : 'Opponent';
     showToast(name + ' won the match!');
+    showSaveButton();
     setTimeout(() => switchView('stats'), 2500);
   }
 }
@@ -814,6 +815,8 @@ function showInitialStep() {
 // --- Reset ---
 function resetMatch() {
   if (!confirm('Reset the match? All data will be lost.')) return;
+  const saveBtn = document.getElementById('save-btn');
+  if (saveBtn) saveBtn.style.display = 'none';
   player1Points = 0; player2Points = 0;
   player1Games = 0;  player2Games = 0;
   player1Sets = 0;   player2Sets = 0;
@@ -848,5 +851,44 @@ function resetMatch() {
   switchView('tracker');
 }
 
+// --- Auth & Save ---
+async function initApp() {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) { window.location.href = '/login'; return; }
+  const user = await res.json();
+  const el = document.getElementById('nav-username');
+  if (el) el.textContent = '👤 ' + user.username;
+  const nameInput = document.getElementById('input-name');
+  if (nameInput && !nameInput.value) nameInput.value = user.username;
+}
+
+async function logoutUser() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+function showSaveButton() {
+  const btn = document.getElementById('save-btn');
+  if (btn) { btn.style.display = 'block'; btn.disabled = false; btn.textContent = 'Save Match'; }
+}
+
+async function saveMatch() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  const res = await fetch('/api/matches', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      config: matchConfig,
+      stats:  stats,
+      result: { player1Sets, player2Sets, won: player1Sets > player2Sets },
+    }),
+  });
+  if (res.ok) { btn.textContent = 'Saved ✓'; showToast('Match saved to your profile!'); }
+  else        { btn.disabled = false; btn.textContent = 'Save Match'; showToast('Failed to save — try again.'); }
+}
+
 // --- Init ---
 updateScore();
+initApp();

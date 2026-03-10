@@ -948,4 +948,226 @@ nav { display: flex; gap: 6px; }
     /* ─ Setup: wider and 2-column fields ─ */
     .setup-card { max-width: 620px; }
     .setup-opts { flex-wrap: nowrap; }
+
+    /* ─ Stats: save button spans full width ─ */
+    #view-stats .save-btn { grid-column: 1 / -1; }
 }
+
+/* ── USER MENU (header) ──────────────────────────────────────────────────── */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.user-link {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.user-link:hover { color: var(--text); border-color: var(--text); }
+
+/* ── SAVE BUTTON ─────────────────────────────────────────────────────────── */
+.save-btn {
+    width: 100%;
+    max-width: 480px;
+    padding: 16px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--green);
+    color: #000;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin: 0 auto;
+    display: block;
+}
+
+.save-btn:hover    { opacity: 0.88; }
+.save-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* ── AUTH PAGES (login.html) ─────────────────────────────────────────────── */
+.auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+}
+
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.auth-logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+}
+
+.auth-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: -10px;
+}
+
+.auth-tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--elevated);
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.auth-tab.active {
+    background: var(--green);
+    color: #000;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.auth-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.auth-field label {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.auth-field input {
+    padding: 11px 14px;
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.auth-field input:focus { border-color: var(--green); }
+
+.auth-error   { color: var(--red);   font-size: 0.875rem; min-height: 1.2em; }
+.auth-success { color: var(--green); font-size: 0.875rem; min-height: 1.2em; }
+
+/* ── PROFILE PAGE ────────────────────────────────────────────────────────── */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+}
+
+.profile-avatar {
+    font-size: 2.4rem;
+    line-height: 1;
+}
+
+.profile-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.profile-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+/* ── MATCH HISTORY CARDS ─────────────────────────────────────────────────── */
+.match-history-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.match-history-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.match-result-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.match-result-badge.green { background: var(--green-dim); color: var(--green); }
+.match-result-badge.red   { background: var(--red-dim);   color: var(--red); }
+
+.match-score { font-weight: 600; font-size: 0.95rem; }
+
+.match-date {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.match-history-bottom {
+    display: flex;
+    gap: 20px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.match-history-bottom strong { color: var(--text); }

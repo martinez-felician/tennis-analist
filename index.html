@@ -18,6 +18,10 @@
             <button class="nav-btn" id="nav-stats" onclick="switchView('stats')">Stats</button>
             <button class="nav-btn" id="nav-insights" onclick="switchView('insights')">Insights</button>
         </nav>
+        <div class="user-menu">
+            <a href="/profile" class="user-link" id="nav-username">Profile</a>
+            <button class="user-link" onclick="logoutUser()">Log Out</button>
+        </div>
     </header>
 
     <!-- TRACKER VIEW -->
@@ -163,6 +167,7 @@
             <div class="stat-line"><span>Return Points Won</span><span class="stat-num" id="s-return-pct">—</span></div>
         </div>
 
+        <button class="save-btn"  id="save-btn" style="display:none" onclick="saveMatch()">Save Match</button>
         <button class="reset-btn" onclick="resetMatch()">Reset Match</button>
 
     </main>

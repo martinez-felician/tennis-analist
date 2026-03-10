@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Analyst — Profile</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span class="brand-icon">🎾</span>
+            <span class="brand-name">Tennis Analyst</span>
+        </div>
+        <nav>
+            <a href="/" class="nav-btn">Tracker</a>
+            <button class="nav-btn" onclick="logoutUser()">Log Out</button>
+        </nav>
+    </header>
+
+    <main class="view active" style="padding: 1.25rem; max-width: 720px; margin: 0 auto;">
+
+        <div class="profile-header">
+            <div class="profile-avatar">🎾</div>
+            <div>
+                <h2 class="profile-name" id="profile-username">—</h2>
+                <p class="profile-sub"  id="profile-summary">Loading...</p>
+            </div>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 1.75rem;">Match History</h2>
+
+        <div id="match-list">
+            <p style="color:var(--muted); text-align:center; padding:2rem">Loading...</p>
+        </div>
+
+    </main>
+
+    <script>
+        const WIN_KEYS  = ['ace','fh-win','bh-win','vol','oh','drop','opp-err'];
+        const LOSS_KEYS = ['df','fh-ue','bh-ue','fh-fe','bh-fe','opp-win','miss-return','vol-err','oh-err','drop-err'];
+
+        async function logoutUser() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+
+        async function init() {
+            const meRes = await fetch('/api/auth/me');
+            if (!meRes.ok) { window.location.href = '/login'; return; }
+            const user = await meRes.json();
+            document.getElementById('profile-username').textContent = user.username;
+
+            const res     = await fetch('/api/matches');
+            const matches = await res.json();
+            const listEl  = document.getElementById('match-list');
+
+            if (!matches.length) {
+                listEl.innerHTML = '<p style="color:var(--muted);text-align:center;padding:2rem">No matches saved yet. Play a match and hit Save Match!</p>';
+                document.getElementById('profile-summary').textContent = '0 matches played';
+                return;
+            }
+
+            let totalWins = 0;
+            matches.forEach(m => {
+                try { if (JSON.parse(m.result).won) totalWins++; } catch (e) {}
+            });
+
+            const n = matches.length;
+            document.getElementById('profile-summary').textContent =
+                `${n} match${n !== 1 ? 'es' : ''} · ${totalWins} win${totalWins !== 1 ? 's' : ''}`;
+
+            listEl.innerHTML = matches.map(m => {
+                let config = {}, stats = {}, result = {};
+                try { config = JSON.parse(m.config); } catch (e) {}
+                try { stats  = JSON.parse(m.stats);  } catch (e) {}
+                try { result = JSON.parse(m.result); } catch (e) {}
+
+                const date  = new Date(m.played_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const won   = result.won;
+                const score = `${result.player1Sets ?? '?'}–${result.player2Sets ?? '?'} sets`;
+
+                const totalWon  = WIN_KEYS.reduce((s, k)  => s + (stats[k] || 0), 0);
+                const totalLost = LOSS_KEYS.reduce((s, k) => s + (stats[k] || 0), 0);
+                const total     = totalWon + totalLost;
+                const winRate   = total > 0 ? Math.round((totalWon / total) * 100) + '%' : '—';
+
+                return `
+                    <div class="match-history-card">
+                        <div class="match-history-top">
+                            <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
+                            <span class="match-score">${score}</span>
+                            <span class="match-date">${date}</span>
+                        </div>
+                        <div class="match-history-bottom">
+                            <span>Win rate <strong>${winRate}</strong></span>
+                            <span>${config.playerName || 'Player'} vs Opponent</span>
+                            <span>Best of ${config.sets || '?'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>
