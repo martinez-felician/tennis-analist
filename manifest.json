@@ -1,0 +1,18 @@
+{
+  "name": "Tennis Analyst",
+  "short_name": "Tennis",
+  "description": "Track your tennis matches and improve your game",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1622",
+  "theme_color": "#22c55e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -86,6 +86,18 @@ def serve_css():
 def serve_js():
     return send_from_directory(BASE_DIR, 'script.js')
 
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory(BASE_DIR, 'manifest.json')
+
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory(BASE_DIR, 'sw.js')
+
+@app.route('/icon.svg')
+def serve_icon():
+    return send_from_directory(BASE_DIR, 'icon.svg')
+
 
 # ── Auth API ──────────────────────────────────────────────────────────────────
 

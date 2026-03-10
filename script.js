@@ -892,3 +892,4 @@ async function saveMatch() {
 // --- Init ---
 updateScore();
 initApp();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
