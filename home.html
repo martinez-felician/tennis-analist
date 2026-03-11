@@ -22,10 +22,15 @@
             <span class="brand-icon">🎾</span>
             <span class="brand-name">Tennis Analyst</span>
         </div>
-        <nav>
-            <a href="/profile" class="nav-btn">Profile</a>
-            <button class="nav-btn" onclick="logoutUser()">Log Out</button>
-        </nav>
+        <div class="nav-dropdown">
+            <button class="nav-dropdown-btn" onclick="toggleDropdown(event)">☰</button>
+            <div class="nav-dropdown-menu" id="nav-menu">
+                <a href="/home"    class="nav-drop-item">🏠 Home</a>
+                <a href="/"        class="nav-drop-item">🎾 Tracker</a>
+                <a href="/profile" class="nav-drop-item">👤 Account</a>
+                <button class="nav-drop-item nav-drop-logout" onclick="logoutUser()">🚪 Log Out</button>
+            </div>
+        </div>
     </header>
 
     <div class="geo-bg" aria-hidden="true">
@@ -117,6 +122,14 @@
     <script>
         const WIN_KEYS  = ['ace','fh-win','bh-win','vol','oh','drop','opp-err'];
         const LOSS_KEYS = ['df','fh-ue','bh-ue','fh-fe','bh-fe','opp-win','miss-return','vol-err','oh-err','drop-err'];
+
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('nav-menu').classList.toggle('open');
+        }
+        document.addEventListener('click', () =>
+            document.getElementById('nav-menu') && document.getElementById('nav-menu').classList.remove('open')
+        );
 
         async function logoutUser() {
             await fetch('/api/auth/logout', { method: 'POST' });

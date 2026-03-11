@@ -22,10 +22,15 @@
             <span class="brand-icon">🎾</span>
             <span class="brand-name">Tennis Analyst</span>
         </div>
-        <nav>
-            <a href="/" class="nav-btn">Tracker</a>
-            <button class="nav-btn" onclick="logoutUser()">Log Out</button>
-        </nav>
+        <div class="nav-dropdown">
+            <button class="nav-dropdown-btn" onclick="toggleDropdown(event)">☰</button>
+            <div class="nav-dropdown-menu" id="nav-menu">
+                <a href="/home"    class="nav-drop-item">🏠 Home</a>
+                <a href="/"        class="nav-drop-item">🎾 Tracker</a>
+                <a href="/profile" class="nav-drop-item">👤 Account</a>
+                <button class="nav-drop-item nav-drop-logout" onclick="logoutUser()">🚪 Log Out</button>
+            </div>
+        </div>
     </header>
 
     <main class="view active profile-view">
@@ -55,15 +60,87 @@
             <button class="upgrade-btn" onclick="startCheckout()">Upgrade to Premium</button>
         </div>
 
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1.75rem;">
-            <h2 class="section-title" style="margin:0">Match History</h2>
-            <button class="manage-sub-btn" id="manage-sub-btn" style="display:none" onclick="manageSubscription()">
-                Manage Subscription
-            </button>
+        <!-- Profile Tabs -->
+        <div class="profile-tabs" style="margin-top:1.75rem">
+            <button class="profile-tab active" id="tab-btn-history"  onclick="showProfileTab('history')">Match History</button>
+            <button class="profile-tab"        id="tab-btn-settings" onclick="showProfileTab('settings')">Account Settings</button>
         </div>
 
-        <div id="match-list" style="margin-top:1rem">
-            <p style="color:var(--text-dim); text-align:center; padding:2rem">Loading...</p>
+        <!-- Match History Tab -->
+        <div id="tab-history" style="margin-top:1rem">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem">
+                <span></span>
+                <button class="manage-sub-btn" id="manage-sub-btn" style="display:none" onclick="manageSubscription()">
+                    Manage Subscription
+                </button>
+            </div>
+            <div id="match-list">
+                <p style="color:var(--text-dim); text-align:center; padding:2rem">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Account Settings Tab -->
+        <div id="tab-settings" style="display:none; margin-top:1rem">
+
+            <!-- Account Info -->
+            <div class="settings-section">
+                <h3 class="settings-title">Account Info</h3>
+                <div class="settings-form">
+                    <div class="settings-row">
+                        <div class="auth-field">
+                            <label>First Name</label>
+                            <input type="text" id="s-first" placeholder="First name" maxlength="30">
+                        </div>
+                        <div class="auth-field">
+                            <label>Last Name</label>
+                            <input type="text" id="s-last" placeholder="Last name" maxlength="30">
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label>Display Name</label>
+                        <input type="text" id="s-username" placeholder="Username (min 2 chars)" maxlength="20">
+                    </div>
+                    <p class="auth-error"   id="profile-err"></p>
+                    <p class="auth-success" id="profile-ok"></p>
+                    <button class="start-btn" onclick="saveProfile()">Save Changes</button>
+                </div>
+            </div>
+
+            <!-- Change Password -->
+            <div class="settings-section">
+                <h3 class="settings-title">Change Password</h3>
+                <div class="settings-form">
+                    <div class="auth-field">
+                        <label>Current Password</label>
+                        <input type="password" id="s-cur-pw" placeholder="Current password">
+                    </div>
+                    <div class="auth-field">
+                        <label>New Password</label>
+                        <input type="password" id="s-new-pw" placeholder="At least 6 characters">
+                    </div>
+                    <div class="auth-field">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="s-con-pw" placeholder="Repeat new password">
+                    </div>
+                    <p class="auth-error"   id="pw-err"></p>
+                    <p class="auth-success" id="pw-ok"></p>
+                    <button class="start-btn" onclick="changePassword()">Update Password</button>
+                </div>
+            </div>
+
+            <!-- Subscription -->
+            <div class="settings-section">
+                <h3 class="settings-title">Subscription</h3>
+                <div id="sub-free" style="display:none">
+                    <p style="color:var(--text-dim); margin-bottom:1rem">You are on the <strong style="color:var(--ivory)">Free</strong> plan. Upgrade to access your full match history and shot breakdowns.</p>
+                    <button class="upgrade-btn" onclick="startCheckout()">Upgrade to Premium — $7/mo</button>
+                </div>
+                <div id="sub-premium" style="display:none">
+                    <p style="color:var(--text-dim); margin-bottom:1rem">You are on the <strong style="color:var(--gold)">★ Premium</strong> plan.</p>
+                    <button class="manage-sub-btn" onclick="manageSubscription()">Manage Subscription</button>
+                </div>
+            </div>
+
         </div>
 
     </main>
@@ -82,6 +159,75 @@
         };
 
         let currentUser = null;
+
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('nav-menu').classList.toggle('open');
+        }
+        document.addEventListener('click', () =>
+            document.getElementById('nav-menu') && document.getElementById('nav-menu').classList.remove('open')
+        );
+
+        function showProfileTab(tab) {
+            document.getElementById('tab-history').style.display  = tab === 'history'  ? 'block' : 'none';
+            document.getElementById('tab-settings').style.display = tab === 'settings' ? 'block' : 'none';
+            document.getElementById('tab-btn-history').classList.toggle('active',  tab === 'history');
+            document.getElementById('tab-btn-settings').classList.toggle('active', tab === 'settings');
+        }
+
+        async function saveProfile() {
+            const errEl = document.getElementById('profile-err');
+            const okEl  = document.getElementById('profile-ok');
+            errEl.textContent = ''; okEl.textContent = '';
+
+            const body = {
+                username:   document.getElementById('s-username').value.trim(),
+                first_name: document.getElementById('s-first').value.trim(),
+                last_name:  document.getElementById('s-last').value.trim(),
+            };
+            const res  = await fetch('/api/auth/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                okEl.textContent = 'Profile updated!';
+                currentUser = { ...currentUser, ...data };
+                document.getElementById('profile-username').textContent = data.username;
+            } else {
+                errEl.textContent = data.error || 'Something went wrong.';
+            }
+        }
+
+        async function changePassword() {
+            const errEl = document.getElementById('pw-err');
+            const okEl  = document.getElementById('pw-ok');
+            errEl.textContent = ''; okEl.textContent = '';
+
+            const cur  = document.getElementById('s-cur-pw').value;
+            const nw   = document.getElementById('s-new-pw').value;
+            const conf = document.getElementById('s-con-pw').value;
+
+            if (!cur || !nw || !conf) { errEl.textContent = 'All fields are required.'; return; }
+            if (nw !== conf)          { errEl.textContent = 'New passwords do not match.'; return; }
+            if (nw.length < 6)        { errEl.textContent = 'New password must be at least 6 characters.'; return; }
+
+            const res  = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ current_password: cur, new_password: nw }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                okEl.textContent = 'Password updated successfully!';
+                document.getElementById('s-cur-pw').value = '';
+                document.getElementById('s-new-pw').value = '';
+                document.getElementById('s-con-pw').value = '';
+            } else {
+                errEl.textContent = data.error || 'Something went wrong.';
+            }
+        }
 
         async function logoutUser() {
             await fetch('/api/auth/logout', { method: 'POST' });
@@ -222,11 +368,18 @@
 
             document.getElementById('profile-username').textContent = currentUser.username;
 
+            // Pre-fill settings form
+            document.getElementById('s-username').value = currentUser.username   || '';
+            document.getElementById('s-first').value    = currentUser.first_name || '';
+            document.getElementById('s-last').value     = currentUser.last_name  || '';
+
             if (currentUser.is_premium) {
                 document.getElementById('premium-badge').style.display  = 'inline-flex';
                 document.getElementById('manage-sub-btn').style.display = 'inline-block';
+                document.getElementById('sub-premium').style.display    = 'block';
             } else {
                 document.getElementById('upgrade-banner').style.display = 'flex';
+                document.getElementById('sub-free').style.display       = 'block';
             }
 
             // Show success banner if redirected from Stripe

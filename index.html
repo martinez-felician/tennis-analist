@@ -27,9 +27,14 @@
             <button class="nav-btn" id="nav-stats" onclick="switchView('stats')">Stats</button>
             <button class="nav-btn" id="nav-insights" onclick="switchView('insights')">Insights</button>
         </nav>
-        <div class="user-menu">
-            <a href="/profile" class="user-link" id="nav-username">Profile</a>
-            <button class="user-link" onclick="logoutUser()">Log Out</button>
+        <div class="nav-dropdown">
+            <button class="nav-dropdown-btn" onclick="toggleDropdown(event)">☰</button>
+            <div class="nav-dropdown-menu" id="nav-menu">
+                <a href="/home"    class="nav-drop-item">🏠 Home</a>
+                <a href="/"        class="nav-drop-item">🎾 Tracker</a>
+                <a href="/profile" class="nav-drop-item">👤 Account</a>
+                <button class="nav-drop-item nav-drop-logout" onclick="logoutUser()">🚪 Log Out</button>
+            </div>
         </div>
     </header>
 
@@ -279,6 +284,15 @@
       </div>
     </div>
 
+    <script>
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('nav-menu').classList.toggle('open');
+        }
+        document.addEventListener('click', () =>
+            document.getElementById('nav-menu') && document.getElementById('nav-menu').classList.remove('open')
+        );
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
