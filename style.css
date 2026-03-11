@@ -314,6 +314,49 @@ nav { display: flex; gap: 6px; }
 }
 
 /* ── STATS VIEW ──────────────────────────────── */
+.stats-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.stats-match-count {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin: 2px 0 0;
+    min-height: 1em;
+}
+
+.stats-tabs {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.stats-tab {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.stats-tab.active {
+    background: var(--green);
+    color: #000;
+}
+
+
 .section-title {
     font-size: 1.3rem;
     font-weight: 800;
@@ -1097,6 +1140,149 @@ nav { display: flex; gap: 6px; }
 .auth-error   { color: var(--red);   font-size: 0.875rem; min-height: 1.2em; }
 .auth-success { color: var(--green); font-size: 0.875rem; min-height: 1.2em; }
 
+/* ── HOME PAGE ───────────────────────────────────────────────────────────── */
+.home-page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.home-welcome {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.home-greeting {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.home-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+/* Start New Match CTA */
+.home-cta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #14532d, #166534);
+    border: 1px solid var(--green);
+    border-radius: 14px;
+    padding: 20px 22px;
+    text-decoration: none;
+    color: var(--text);
+    transition: filter 0.15s, transform 0.15s;
+}
+
+.home-cta:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+.home-cta-icon { font-size: 2rem; flex-shrink: 0; }
+
+.home-cta-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.home-cta-text strong { font-size: 1.05rem; font-weight: 700; color: #fff; }
+.home-cta-text span   { font-size: 0.85rem; color: #86efac; }
+
+.home-cta-arrow {
+    font-size: 1.3rem;
+    color: var(--green);
+    flex-shrink: 0;
+}
+
+/* Quick stats strip */
+.home-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.home-stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+}
+
+.home-stat-num {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+}
+
+.home-stat-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+/* Sections */
+.home-section { display: flex; flex-direction: column; gap: 10px; }
+
+.home-section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.home-empty {
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 1rem 0;
+}
+
+/* Quick access link cards */
+.home-links { display: flex; flex-direction: column; gap: 8px; }
+
+.home-link-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.home-link-card:hover {
+    border-color: var(--green);
+    background: var(--elevated);
+}
+
+.home-link-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+.home-link-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.home-link-text strong { font-size: 0.92rem; color: #fff; }
+.home-link-text span   { font-size: 0.8rem; color: var(--muted); }
+
+.home-link-arrow { color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+
 /* ── PROFILE PAGE ────────────────────────────────────────────────────────── */
 .profile-header {
     display: flex;
@@ -1171,3 +1357,140 @@ nav { display: flex; gap: 6px; }
 }
 
 .match-history-bottom strong { color: var(--text); }
+
+/* ── PREMIUM BADGE ───────────────────────────────────────────────────────── */
+.premium-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+}
+
+/* ── UPGRADE BANNER ──────────────────────────────────────────────────────── */
+.upgrade-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #1a2e1a, #14251f);
+    border: 1px solid var(--green);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.upgrade-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.upgrade-banner-text strong { color: var(--text); font-size: 0.95rem; }
+.upgrade-banner-text span   { color: var(--muted); font-size: 0.85rem; }
+
+.upgrade-btn {
+    padding: 10px 20px;
+    background: var(--green);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: filter 0.15s, transform 0.15s;
+}
+.upgrade-btn:hover    { filter: brightness(1.1); transform: translateY(-1px); }
+.upgrade-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ── UPGRADE SUCCESS BANNER ──────────────────────────────────────────────── */
+.upgrade-success {
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    color: var(--green);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* ── MANAGE SUBSCRIPTION BUTTON ──────────────────────────────────────────── */
+.manage-sub-btn {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.manage-sub-btn:hover { border-color: var(--text); color: var(--text); }
+
+/* ── PREVIEW LOCK ROW ────────────────────────────────────────────────────── */
+.match-preview-lock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+.match-preview-lock .lock-icon { font-size: 0.9rem; }
+.match-preview-lock strong     { color: var(--text); }
+
+/* ── SHOT BREAKDOWN ROW (premium) ────────────────────────────────────────── */
+.match-shot-breakdown {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.shot-tag {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.shot-tag.win-tag  { background: var(--green-dim); color: var(--green); }
+.shot-tag.loss-tag { background: var(--red-dim);   color: var(--red); }
+
+/* ── LOCKED MATCH CARD ───────────────────────────────────────────────────── */
+.match-card-locked {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.match-card-locked .lock-icon { font-size: 1.5rem; flex-shrink: 0; }
+
+.match-card-locked div {
+    flex: 1;
+    min-width: 160px;
+}
+.match-card-locked div strong { color: var(--text); font-size: 0.92rem; }
+.match-card-locked div p {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin: 4px 0 0;
+}

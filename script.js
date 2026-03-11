@@ -520,7 +520,7 @@ function switchView(view) {
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
   document.getElementById('nav-' + view).classList.add('active');
-  if (view === 'stats') updateStats();
+  if (view === 'stats') switchStatsTab(currentStatsTab);
   if (view === 'insights') renderInsights();
 }
 
@@ -704,32 +704,85 @@ function updateScore() {
 }
 
 // --- Stats ---
-function updateStats() {
-  const won = Object.entries(stats)
-    .filter(([k]) => WIN_METHODS.some(m => m.key === k))
-    .reduce((s, [, v]) => s + v, 0);
-  const lost = Object.entries(stats)
-    .filter(([k]) => LOSS_METHODS.some(m => m.key === k))
-    .reduce((s, [, v]) => s + v, 0);
-  const total = won + lost;
+let currentStatsTab = 'match';
+
+function updateStats(statsData) {
+  const s = statsData || stats;
+
+  const won  = Object.entries(s).filter(([k]) => WIN_METHODS.some(m => m.key === k)).reduce((a, [, v]) => a + v, 0);
+  const lost = Object.entries(s).filter(([k]) => LOSS_METHODS.some(m => m.key === k)).reduce((a, [, v]) => a + v, 0);
+  const total   = won + lost;
   const winrate = total > 0 ? Math.round((won / total) * 100) : null;
 
-  document.getElementById('stat-won').textContent = won;
-  document.getElementById('stat-lost').textContent = lost;
-  document.getElementById('stat-winrate').textContent = winrate !== null ? winrate + '%' : '\u2014';
-  document.getElementById('winrate-bar').style.width = (winrate ?? 0) + '%';
+  document.getElementById('stat-won').textContent      = won;
+  document.getElementById('stat-lost').textContent     = lost;
+  document.getElementById('stat-winrate').textContent  = winrate !== null ? winrate + '%' : '\u2014';
+  document.getElementById('winrate-bar').style.width   = (winrate ?? 0) + '%';
 
-  Object.keys(stats).forEach(key => {
+  // Reset all shot-type cells to 0 before filling
+  document.querySelectorAll('[id^="s-"]').forEach(el => {
+    if (!['s-serve1-pct', 's-serve2-pct', 's-return-pct'].includes(el.id)) el.textContent = '0';
+  });
+  Object.keys(s).forEach(key => {
     const el = document.getElementById('s-' + key);
-    if (el) el.textContent = stats[key];
+    if (el) el.textContent = s[key];
   });
 
-  const s1Total = stats.serve1stIn + stats.serve1stOut;
-  const s2Total = stats.serve2ndIn + stats.df;
-  const retTotal = stats.returnWon + stats.returnLost;
-  document.getElementById('s-serve1-pct').textContent = s1Total > 0 ? Math.round((stats.serve1stIn / s1Total) * 100) + '%' : '—';
-  document.getElementById('s-serve2-pct').textContent = s2Total > 0 ? Math.round((stats.serve2ndIn / s2Total) * 100) + '%' : '—';
-  document.getElementById('s-return-pct').textContent = retTotal > 0 ? Math.round((stats.returnWon / retTotal) * 100) + '%' : '—';
+  const s1Total  = (s.serve1stIn || 0) + (s.serve1stOut || 0);
+  const s2Total  = (s.serve2ndIn || 0) + (s.df || 0);
+  const retTotal = (s.returnWon  || 0) + (s.returnLost  || 0);
+  document.getElementById('s-serve1-pct').textContent = s1Total  > 0 ? Math.round(((s.serve1stIn || 0) / s1Total)  * 100) + '%' : '—';
+  document.getElementById('s-serve2-pct').textContent = s2Total  > 0 ? Math.round(((s.serve2ndIn || 0) / s2Total)  * 100) + '%' : '—';
+  document.getElementById('s-return-pct').textContent = retTotal > 0 ? Math.round(((s.returnWon  || 0) / retTotal) * 100) + '%' : '—';
+}
+
+async function switchStatsTab(tab) {
+  currentStatsTab = tab;
+  document.getElementById('tab-this-match').classList.toggle('active', tab === 'match');
+  document.getElementById('tab-all-matches').classList.toggle('active', tab === 'all');
+
+  const saveBtn  = document.getElementById('save-btn');
+  const resetBtn = document.querySelector('.reset-btn');
+
+  if (tab === 'match') {
+    document.getElementById('stats-title').textContent      = 'Match Statistics';
+    document.getElementById('stats-match-count').textContent = '';
+    if (saveBtn)  saveBtn.style.display  = matchOver ? 'block' : 'none';
+    if (resetBtn) resetBtn.style.display = 'block';
+    updateStats();
+    return;
+  }
+
+  // All Matches tab
+  document.getElementById('stats-title').textContent       = 'All-Time Statistics';
+  document.getElementById('stats-match-count').textContent = 'Loading…';
+  if (saveBtn)  saveBtn.style.display  = 'none';
+  if (resetBtn) resetBtn.style.display = 'none';
+
+  try {
+    const res     = await fetch('/api/matches');
+    const matches = await res.json();
+
+    if (!matches.length) {
+      document.getElementById('stats-match-count').textContent = 'No saved matches yet';
+      updateStats({});
+      return;
+    }
+
+    const merged = {};
+    matches.forEach(m => {
+      try {
+        const s = JSON.parse(m.stats);
+        Object.keys(s).forEach(k => { merged[k] = (merged[k] || 0) + (s[k] || 0); });
+      } catch (e) {}
+    });
+
+    const n = matches.length;
+    document.getElementById('stats-match-count').textContent = `Across ${n} match${n !== 1 ? 'es' : ''}`;
+    updateStats(merged);
+  } catch (e) {
+    document.getElementById('stats-match-count').textContent = 'Could not load matches';
+  }
 }
 
 // --- Toast ---
@@ -860,6 +913,23 @@ async function initApp() {
   if (el) el.textContent = '👤 ' + user.username;
   const nameInput = document.getElementById('input-name');
   if (nameInput && !nameInput.value) nameInput.value = user.username;
+
+  // Auto-save any match that was interrupted by session expiry
+  const pending = localStorage.getItem('pendingMatch');
+  if (pending) {
+    localStorage.removeItem('pendingMatch');
+    try {
+      const saveRes = await fetch('/api/matches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: pending,
+      });
+      if (saveRes.ok) showToast('Your previous match was saved!');
+      else            showToast('Could not recover previous match — sorry.');
+    } catch (e) {
+      showToast('Could not recover previous match — sorry.');
+    }
+  }
 }
 
 async function logoutUser() {
@@ -885,11 +955,39 @@ async function saveMatch() {
       result: { player1Sets, player2Sets, won: player1Sets > player2Sets },
     }),
   });
-  if (res.ok) { btn.textContent = 'Saved ✓'; showToast('Match saved to your profile!'); }
-  else        { btn.disabled = false; btn.textContent = 'Save Match'; showToast('Failed to save — try again.'); }
+  if (res.ok) {
+    btn.textContent = 'Saved ✓';
+    showToast('Match saved to your profile!');
+  } else if (res.status === 401) {
+    // Session expired — stash match data so it survives the login redirect
+    localStorage.setItem('pendingMatch', JSON.stringify({
+      config: matchConfig,
+      stats,
+      result: { player1Sets, player2Sets, won: player1Sets > player2Sets },
+    }));
+    btn.disabled = false;
+    btn.textContent = 'Save Match';
+    showToast('Session expired — logging you in to save your match…');
+    setTimeout(() => { window.location.href = '/login'; }, 2000);
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Save Match';
+    showToast('Failed to save — try again.');
+  }
 }
 
 // --- Init ---
 updateScore();
-initApp();
+initApp().then(() => {
+  // Handle deep links from home page quick-access cards
+  const params = new URLSearchParams(location.search);
+  if (params.get('stats') === 'all') {
+    history.replaceState({}, '', '/');
+    switchView('stats');
+    switchStatsTab('all');
+  } else if (params.get('view') === 'insights') {
+    history.replaceState({}, '', '/');
+    switchView('insights');
+  }
+});
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');

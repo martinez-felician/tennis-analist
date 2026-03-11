@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Analyst — Home</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#22c55e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tennis">
+    <link rel="apple-touch-icon" href="/icon.svg">
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span class="brand-icon">🎾</span>
+            <span class="brand-name">Tennis Analyst</span>
+        </div>
+        <nav>
+            <a href="/profile" class="nav-btn">Profile</a>
+            <button class="nav-btn" onclick="logoutUser()">Log Out</button>
+        </nav>
+    </header>
+
+    <main class="home-page">
+
+        <!-- Welcome -->
+        <div class="home-welcome">
+            <div>
+                <h1 class="home-greeting" id="home-greeting">Welcome back!</h1>
+                <p class="home-sub" id="home-sub">Ready to play?</p>
+            </div>
+            <span class="premium-badge" id="home-premium-badge" style="display:none">★ Premium</span>
+        </div>
+
+        <!-- Start New Match CTA -->
+        <a href="/" class="home-cta">
+            <span class="home-cta-icon">🎾</span>
+            <div class="home-cta-text">
+                <strong>Start New Match</strong>
+                <span>Track every point in real time</span>
+            </div>
+            <span class="home-cta-arrow">→</span>
+        </a>
+
+        <!-- Quick stats -->
+        <div class="home-stats-row" id="home-stats-row">
+            <div class="home-stat-card">
+                <div class="home-stat-num" id="h-total">—</div>
+                <div class="home-stat-label">Matches</div>
+            </div>
+            <div class="home-stat-card">
+                <div class="home-stat-num" style="color:var(--green)" id="h-wins">—</div>
+                <div class="home-stat-label">Wins</div>
+            </div>
+            <div class="home-stat-card">
+                <div class="home-stat-num" style="color:var(--gold)" id="h-winrate">—</div>
+                <div class="home-stat-label">Win Rate</div>
+            </div>
+        </div>
+
+        <!-- Last match -->
+        <div class="home-section">
+            <h2 class="home-section-title">Last Match</h2>
+            <div id="home-last-match">
+                <p class="home-empty">No matches saved yet — play your first match!</p>
+            </div>
+        </div>
+
+        <!-- Quick links -->
+        <div class="home-section">
+            <h2 class="home-section-title">Quick Access</h2>
+            <div class="home-links">
+                <a href="/profile" class="home-link-card">
+                    <span class="home-link-icon">📋</span>
+                    <div class="home-link-text">
+                        <strong>Match History</strong>
+                        <span>Review all your saved matches</span>
+                    </div>
+                    <span class="home-link-arrow">→</span>
+                </a>
+                <a href="/?stats=all" class="home-link-card">
+                    <span class="home-link-icon">📊</span>
+                    <div class="home-link-text">
+                        <strong>All-Time Stats</strong>
+                        <span>See your aggregated shot breakdown</span>
+                    </div>
+                    <span class="home-link-arrow">→</span>
+                </a>
+                <a href="/?view=insights" class="home-link-card">
+                    <span class="home-link-icon">🧠</span>
+                    <div class="home-link-text">
+                        <strong>Practice Plan</strong>
+                        <span>AI-generated drills from your last match</span>
+                    </div>
+                    <span class="home-link-arrow">→</span>
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const WIN_KEYS  = ['ace','fh-win','bh-win','vol','oh','drop','opp-err'];
+        const LOSS_KEYS = ['df','fh-ue','bh-ue','fh-fe','bh-fe','opp-win','miss-return','vol-err','oh-err','drop-err'];
+
+        async function logoutUser() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+
+        async function init() {
+            const meRes = await fetch('/api/auth/me');
+            if (!meRes.ok) { window.location.href = '/login'; return; }
+            const user = await meRes.json();
+
+            document.getElementById('home-greeting').textContent = `Welcome back, ${user.username}!`;
+            if (user.is_premium) {
+                document.getElementById('home-premium-badge').style.display = 'inline-flex';
+                document.getElementById('home-sub').textContent = 'Premium member — full access unlocked.';
+            }
+
+            const res = await fetch('/api/matches');
+            if (!res.ok) return;
+            const matches = await res.json();
+
+            if (!matches.length) return;
+
+            // Quick stats
+            const totalWins = matches.filter(m => { try { return JSON.parse(m.result).won; } catch(e) { return false; } }).length;
+            const totalPtsWon  = matches.reduce((sum, m) => { try { const s = JSON.parse(m.stats); return sum + WIN_KEYS.reduce((a,k) => a+(s[k]||0), 0); } catch(e) { return sum; } }, 0);
+            const totalPtsLost = matches.reduce((sum, m) => { try { const s = JSON.parse(m.stats); return sum + LOSS_KEYS.reduce((a,k) => a+(s[k]||0), 0); } catch(e) { return sum; } }, 0);
+            const totalPts = totalPtsWon + totalPtsLost;
+            const winRate  = totalPts > 0 ? Math.round((totalPtsWon / totalPts) * 100) + '%' : '—';
+
+            document.getElementById('h-total').textContent   = matches.length;
+            document.getElementById('h-wins').textContent    = totalWins;
+            document.getElementById('h-winrate').textContent = winRate;
+            document.getElementById('home-sub').textContent  = `${matches.length} match${matches.length !== 1 ? 'es' : ''} played · ${totalWins} win${totalWins !== 1 ? 's' : ''}`;
+
+            // Last match card
+            const m = matches[0];
+            let config = {}, stats = {}, result = {};
+            try { config = JSON.parse(m.config); } catch(e) {}
+            try { stats  = JSON.parse(m.stats);  } catch(e) {}
+            try { result = JSON.parse(m.result); } catch(e) {}
+
+            const date    = new Date(m.played_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const won     = result.won;
+            const score   = `${result.player1Sets ?? '?'}–${result.player2Sets ?? '?'} sets`;
+            const ptsWon  = WIN_KEYS.reduce((a,k)  => a+(stats[k]||0), 0);
+            const ptsLost = LOSS_KEYS.reduce((a,k) => a+(stats[k]||0), 0);
+            const pts     = ptsWon + ptsLost;
+            const wr      = pts > 0 ? Math.round((ptsWon / pts) * 100) + '%' : '—';
+
+            document.getElementById('home-last-match').innerHTML = `
+                <div class="match-history-card">
+                    <div class="match-history-top">
+                        <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
+                        <span class="match-score">${score}</span>
+                        <span class="match-date">${date}</span>
+                    </div>
+                    <div class="match-history-bottom">
+                        <span>Win rate <strong>${wr}</strong></span>
+                        <span>${config.playerName || 'Player'} vs Opponent</span>
+                        <span>Best of ${config.sets || '?'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        init();
+    </script>
+</body>
+</html>

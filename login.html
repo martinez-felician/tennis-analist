@@ -80,7 +80,7 @@
                 }),
             });
             const data = await res.json();
-            if (res.ok) { window.location.href = '/'; }
+            if (res.ok) { window.location.href = '/home'; }
             else        { errEl.textContent = data.error; }
         }
 

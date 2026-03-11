@@ -117,7 +117,16 @@
     <!-- STATS VIEW -->
     <main id="view-stats" class="view">
 
-        <h2 class="section-title">Match Statistics</h2>
+        <div class="stats-header">
+            <div>
+                <h2 class="section-title" id="stats-title">Match Statistics</h2>
+                <p class="stats-match-count" id="stats-match-count"></p>
+            </div>
+            <div class="stats-tabs">
+                <button class="stats-tab active" id="tab-this-match" onclick="switchStatsTab('match')">This Match</button>
+                <button class="stats-tab" id="tab-all-matches" onclick="switchStatsTab('all')">All Matches</button>
+            </div>
+        </div>
 
         <div class="stat-card overview-card">
             <div class="overview-numbers">

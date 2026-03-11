@@ -4,6 +4,7 @@ import secrets
 import sqlite3
 from functools import wraps
 
+import stripe
 from flask import Flask, request, jsonify, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -23,6 +24,11 @@ else:
     open(_key_file, 'w').write(_k)
     app.secret_key = _k
 
+# Stripe config — set these as environment variables
+stripe.api_key            = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_PRICE_ID           = os.environ.get('STRIPE_PRICE_ID', '')
+STRIPE_WEBHOOK_SECRET     = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
 
 # ── Database ──────────────────────────────────────────────────────────────────
 
@@ -36,11 +42,14 @@ def init_db():
     conn = get_db()
     conn.executescript('''
         CREATE TABLE IF NOT EXISTS users (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            username      TEXT    UNIQUE NOT NULL,
-            email         TEXT    UNIQUE NOT NULL,
-            password_hash TEXT    NOT NULL,
-            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            username            TEXT    UNIQUE NOT NULL,
+            email               TEXT    UNIQUE NOT NULL,
+            password_hash       TEXT    NOT NULL,
+            is_premium          INTEGER NOT NULL DEFAULT 0,
+            stripe_customer_id  TEXT,
+            subscription_status TEXT,
+            created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS matches (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,6 +60,16 @@ def init_db():
             played_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     ''')
+    # Migrate existing DB: add new columns if they don't exist yet
+    for col, definition in [
+        ('is_premium',          'INTEGER NOT NULL DEFAULT 0'),
+        ('stripe_customer_id',  'TEXT'),
+        ('subscription_status', 'TEXT'),
+    ]:
+        try:
+            conn.execute(f'ALTER TABLE users ADD COLUMN {col} {definition}')
+        except Exception:
+            pass  # column already exists
     conn.commit()
     conn.close()
 
@@ -69,6 +88,10 @@ def login_required(f):
 @app.route('/')
 def home():
     return send_from_directory(BASE_DIR, 'index.html')
+
+@app.route('/home')
+def home_page():
+    return send_from_directory(BASE_DIR, 'home.html')
 
 @app.route('/login')
 def login_page():
@@ -156,10 +179,18 @@ def logout():
 def me():
     if 'user_id' not in session:
         return jsonify({'authenticated': False}), 401
+    conn = get_db()
+    user = conn.execute(
+        'SELECT is_premium, subscription_status FROM users WHERE id = ?',
+        (session['user_id'],)
+    ).fetchone()
+    conn.close()
     return jsonify({
-        'authenticated': True,
-        'user_id':  session['user_id'],
-        'username': session['username'],
+        'authenticated':       True,
+        'user_id':             session['user_id'],
+        'username':            session['username'],
+        'is_premium':          bool(user['is_premium']) if user else False,
+        'subscription_status': user['subscription_status'] if user else None,
     })
 
 
@@ -171,7 +202,7 @@ def get_matches():
     conn = get_db()
     rows = conn.execute(
         'SELECT id, config, stats, result, played_at FROM matches '
-        'WHERE user_id = ? ORDER BY played_at DESC',
+        'WHERE user_id = ? ORDER BY id DESC',
         (session['user_id'],)
     ).fetchall()
     conn.close()
@@ -195,6 +226,101 @@ def save_match():
     conn.commit()
     conn.close()
     return jsonify({'message': 'Match saved'}), 201
+
+
+# ── Billing API ───────────────────────────────────────────────────────────────
+
+@app.route('/api/billing/checkout', methods=['POST'])
+@login_required
+def create_checkout():
+    if not stripe.api_key or not STRIPE_PRICE_ID:
+        return jsonify({'error': 'Billing not configured'}), 503
+
+    conn = get_db()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    conn.close()
+
+    # Get or create Stripe customer
+    customer_id = user['stripe_customer_id']
+    if not customer_id:
+        customer = stripe.Customer.create(
+            email=user['email'],
+            name=user['username'],
+            metadata={'user_id': session['user_id']},
+        )
+        customer_id = customer.id
+        conn = get_db()
+        conn.execute(
+            'UPDATE users SET stripe_customer_id = ? WHERE id = ?',
+            (customer_id, session['user_id'])
+        )
+        conn.commit()
+        conn.close()
+
+    base_url = request.host_url.rstrip('/')
+    checkout = stripe.checkout.Session.create(
+        customer=customer_id,
+        payment_method_types=['card'],
+        line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}],
+        mode='subscription',
+        success_url=base_url + '/profile?upgraded=1',
+        cancel_url=base_url + '/profile',
+    )
+    return jsonify({'url': checkout.url})
+
+
+@app.route('/api/billing/portal', methods=['POST'])
+@login_required
+def billing_portal():
+    if not stripe.api_key:
+        return jsonify({'error': 'Billing not configured'}), 503
+
+    conn = get_db()
+    user = conn.execute(
+        'SELECT stripe_customer_id FROM users WHERE id = ?',
+        (session['user_id'],)
+    ).fetchone()
+    conn.close()
+
+    if not user or not user['stripe_customer_id']:
+        return jsonify({'error': 'No billing account found'}), 404
+
+    base_url = request.host_url.rstrip('/')
+    portal = stripe.billing_portal.Session.create(
+        customer=user['stripe_customer_id'],
+        return_url=base_url + '/profile',
+    )
+    return jsonify({'url': portal.url})
+
+
+@app.route('/api/billing/webhook', methods=['POST'])
+def stripe_webhook():
+    payload    = request.get_data()
+    sig_header = request.headers.get('Stripe-Signature', '')
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
+    except (ValueError, stripe.error.SignatureVerificationError):
+        return '', 400
+
+    obj = event['data']['object']
+    if event['type'] in ('customer.subscription.created', 'customer.subscription.updated'):
+        _update_subscription(obj['customer'], obj['status'])
+    elif event['type'] == 'customer.subscription.deleted':
+        _update_subscription(obj['customer'], 'canceled')
+
+    return '', 200
+
+
+def _update_subscription(customer_id, status):
+    is_premium = 1 if status == 'active' else 0
+    conn = get_db()
+    conn.execute(
+        'UPDATE users SET is_premium = ?, subscription_status = ? WHERE stripe_customer_id = ?',
+        (is_premium, status, customer_id)
+    )
+    conn.commit()
+    conn.close()
 
 
 # ── Run ───────────────────────────────────────────────────────────────────────

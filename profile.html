@@ -29,15 +29,37 @@
 
         <div class="profile-header">
             <div class="profile-avatar">🎾</div>
-            <div>
-                <h2 class="profile-name" id="profile-username">—</h2>
-                <p class="profile-sub"  id="profile-summary">Loading...</p>
+            <div style="flex:1">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <h2 class="profile-name" id="profile-username">—</h2>
+                    <span class="premium-badge" id="premium-badge" style="display:none">★ Premium</span>
+                </div>
+                <p class="profile-sub" id="profile-summary">Loading...</p>
             </div>
         </div>
 
-        <h2 class="section-title" style="margin-top: 1.75rem;">Match History</h2>
+        <!-- Upgrade success banner -->
+        <div class="upgrade-success" id="upgrade-success" style="display:none">
+            🎉 Welcome to Premium! You now have access to your full match history.
+        </div>
 
-        <div id="match-list">
+        <!-- Upgrade CTA banner (free users only) -->
+        <div class="upgrade-banner" id="upgrade-banner" style="display:none">
+            <div class="upgrade-banner-text">
+                <strong>Unlock your full match history</strong>
+                <span>See detailed shot breakdowns, serve stats, and every match you've played.</span>
+            </div>
+            <button class="upgrade-btn" onclick="startCheckout()">Upgrade to Premium</button>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1.75rem;">
+            <h2 class="section-title" style="margin:0">Match History</h2>
+            <button class="manage-sub-btn" id="manage-sub-btn" style="display:none" onclick="manageSubscription()">
+                Manage Subscription
+            </button>
+        </div>
+
+        <div id="match-list" style="margin-top:1rem">
             <p style="color:var(--muted); text-align:center; padding:2rem">Loading...</p>
         </div>
 
@@ -47,16 +69,168 @@
         const WIN_KEYS  = ['ace','fh-win','bh-win','vol','oh','drop','opp-err'];
         const LOSS_KEYS = ['df','fh-ue','bh-ue','fh-fe','bh-fe','opp-win','miss-return','vol-err','oh-err','drop-err'];
 
+        const SHOT_LABELS = {
+            'ace':'Ace', 'fh-win':'Forehand Winner', 'bh-win':'Backhand Winner',
+            'vol':'Volley Winner', 'oh':'Overhead', 'drop':'Drop Shot', 'opp-err':'Opponent Error',
+            'df':'Double Fault', 'fh-ue':'Forehand Error', 'bh-ue':'Backhand Error',
+            'fh-fe':'Forehand Forced Err', 'bh-fe':'Backhand Forced Err',
+            'opp-win':'Opponent Winner', 'miss-return':'Missed Return',
+            'vol-err':'Volley Error', 'oh-err':'Overhead Error', 'drop-err':'Drop Shot Error',
+        };
+
+        let currentUser = null;
+
         async function logoutUser() {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login';
         }
 
+        async function startCheckout() {
+            const btn = document.querySelector('.upgrade-btn');
+            btn.textContent = 'Redirecting…';
+            btn.disabled = true;
+            const res  = await fetch('/api/billing/checkout', { method: 'POST' });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                btn.textContent = 'Upgrade to Premium';
+                btn.disabled = false;
+                alert(data.error || 'Something went wrong. Please try again.');
+            }
+        }
+
+        async function manageSubscription() {
+            const btn = document.getElementById('manage-sub-btn');
+            btn.textContent = 'Loading…';
+            btn.disabled = true;
+            const res  = await fetch('/api/billing/portal', { method: 'POST' });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                btn.textContent = 'Manage Subscription';
+                btn.disabled = false;
+                alert(data.error || 'Something went wrong. Please try again.');
+            }
+        }
+
+        function buildPreviewCard(m) {
+            let config = {}, stats = {}, result = {};
+            try { config = JSON.parse(m.config); } catch (e) {}
+            try { stats  = JSON.parse(m.stats);  } catch (e) {}
+            try { result = JSON.parse(m.result); } catch (e) {}
+
+            const date     = new Date(m.played_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const won      = result.won;
+            const score    = `${result.player1Sets ?? '?'}–${result.player2Sets ?? '?'} sets`;
+            const totalWon  = WIN_KEYS.reduce((s, k)  => s + (stats[k] || 0), 0);
+            const totalLost = LOSS_KEYS.reduce((s, k) => s + (stats[k] || 0), 0);
+            const total     = totalWon + totalLost;
+            const winRate   = total > 0 ? Math.round((totalWon / total) * 100) + '%' : '—';
+            const firstServeWon  = (stats['ace'] || 0) + (stats['fh-win'] || 0);
+            const firstServeLost = (stats['df']  || 0);
+            const firstServePct  = (firstServeWon + firstServeLost) > 0
+                ? Math.round((firstServeWon / (firstServeWon + firstServeLost)) * 100) + '%'
+                : '—';
+
+            return `
+                <div class="match-history-card">
+                    <div class="match-history-top">
+                        <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
+                        <span class="match-score">${score}</span>
+                        <span class="match-date">${date}</span>
+                    </div>
+                    <div class="match-history-bottom">
+                        <span>Win rate <strong>${winRate}</strong></span>
+                        <span>1st serve pts <strong>${firstServePct}</strong></span>
+                        <span>${total} points played</span>
+                    </div>
+                    <div class="match-preview-lock">
+                        <span class="lock-icon">🔒</span>
+                        <span>Shot breakdown &amp; full stats — <strong>Premium only</strong></span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildFullCard(m) {
+            let config = {}, stats = {}, result = {};
+            try { config = JSON.parse(m.config); } catch (e) {}
+            try { stats  = JSON.parse(m.stats);  } catch (e) {}
+            try { result = JSON.parse(m.result); } catch (e) {}
+
+            const date     = new Date(m.played_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const won      = result.won;
+            const score    = `${result.player1Sets ?? '?'}–${result.player2Sets ?? '?'} sets`;
+            const totalWon  = WIN_KEYS.reduce((s, k)  => s + (stats[k] || 0), 0);
+            const totalLost = LOSS_KEYS.reduce((s, k) => s + (stats[k] || 0), 0);
+            const total     = totalWon + totalLost;
+            const winRate   = total > 0 ? Math.round((totalWon / total) * 100) + '%' : '—';
+
+            // Top win/loss shot
+            const topWin  = WIN_KEYS.reduce((best, k) => (stats[k]||0) > (stats[best]||0) ? k : best, WIN_KEYS[0]);
+            const topLoss = LOSS_KEYS.reduce((best, k) => (stats[k]||0) > (stats[best]||0) ? k : best, LOSS_KEYS[0]);
+
+            const firstServeWon  = (stats['ace'] || 0) + (stats['fh-win'] || 0);
+            const firstServeLost = (stats['df']  || 0);
+            const firstServePct  = (firstServeWon + firstServeLost) > 0
+                ? Math.round((firstServeWon / (firstServeWon + firstServeLost)) * 100) + '%'
+                : '—';
+
+            return `
+                <div class="match-history-card">
+                    <div class="match-history-top">
+                        <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
+                        <span class="match-score">${score}</span>
+                        <span class="match-date">${date}</span>
+                    </div>
+                    <div class="match-history-bottom">
+                        <span>Win rate <strong>${winRate}</strong></span>
+                        <span>1st serve pts <strong>${firstServePct}</strong></span>
+                        <span>${total} points played</span>
+                    </div>
+                    <div class="match-shot-breakdown">
+                        <span class="shot-tag win-tag">✓ ${SHOT_LABELS[topWin] || topWin} (${stats[topWin]||0})</span>
+                        <span class="shot-tag loss-tag">✗ ${SHOT_LABELS[topLoss] || topLoss} (${stats[topLoss]||0})</span>
+                        <span style="color:var(--muted);font-size:0.8rem">${config.playerName || 'Player'} · Best of ${config.sets || '?'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildLockedCard(count) {
+            return `
+                <div class="match-card-locked">
+                    <span class="lock-icon">🔒</span>
+                    <div>
+                        <strong>${count} more match${count !== 1 ? 'es' : ''} in your history</strong>
+                        <p>Upgrade to Premium to access your full match history and shot breakdowns.</p>
+                    </div>
+                    <button class="upgrade-btn" onclick="startCheckout()">Upgrade — $7/mo</button>
+                </div>
+            `;
+        }
+
         async function init() {
             const meRes = await fetch('/api/auth/me');
             if (!meRes.ok) { window.location.href = '/login'; return; }
-            const user = await meRes.json();
-            document.getElementById('profile-username').textContent = user.username;
+            currentUser = await meRes.json();
+
+            document.getElementById('profile-username').textContent = currentUser.username;
+
+            if (currentUser.is_premium) {
+                document.getElementById('premium-badge').style.display  = 'inline-flex';
+                document.getElementById('manage-sub-btn').style.display = 'inline-block';
+            } else {
+                document.getElementById('upgrade-banner').style.display = 'flex';
+            }
+
+            // Show success banner if redirected from Stripe
+            if (new URLSearchParams(location.search).get('upgraded') === '1') {
+                document.getElementById('upgrade-success').style.display = 'block';
+                history.replaceState({}, '', '/profile');
+            }
 
             const res     = await fetch('/api/matches');
             const matches = await res.json();
@@ -72,41 +246,19 @@
             matches.forEach(m => {
                 try { if (JSON.parse(m.result).won) totalWins++; } catch (e) {}
             });
-
             const n = matches.length;
             document.getElementById('profile-summary').textContent =
                 `${n} match${n !== 1 ? 'es' : ''} · ${totalWins} win${totalWins !== 1 ? 's' : ''}`;
 
-            listEl.innerHTML = matches.map(m => {
-                let config = {}, stats = {}, result = {};
-                try { config = JSON.parse(m.config); } catch (e) {}
-                try { stats  = JSON.parse(m.stats);  } catch (e) {}
-                try { result = JSON.parse(m.result); } catch (e) {}
-
-                const date  = new Date(m.played_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const won   = result.won;
-                const score = `${result.player1Sets ?? '?'}–${result.player2Sets ?? '?'} sets`;
-
-                const totalWon  = WIN_KEYS.reduce((s, k)  => s + (stats[k] || 0), 0);
-                const totalLost = LOSS_KEYS.reduce((s, k) => s + (stats[k] || 0), 0);
-                const total     = totalWon + totalLost;
-                const winRate   = total > 0 ? Math.round((totalWon / total) * 100) + '%' : '—';
-
-                return `
-                    <div class="match-history-card">
-                        <div class="match-history-top">
-                            <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
-                            <span class="match-score">${score}</span>
-                            <span class="match-date">${date}</span>
-                        </div>
-                        <div class="match-history-bottom">
-                            <span>Win rate <strong>${winRate}</strong></span>
-                            <span>${config.playerName || 'Player'} vs Opponent</span>
-                            <span>Best of ${config.sets || '?'}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            if (currentUser.is_premium) {
+                listEl.innerHTML = matches.map(buildFullCard).join('');
+            } else {
+                const preview = matches.slice(0, 2);
+                const locked  = matches.length - preview.length;
+                let html = preview.map(buildPreviewCard).join('');
+                if (locked > 0) html += buildLockedCard(locked);
+                listEl.innerHTML = html;
+            }
         }
 
         init();
