@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 python -m pytest test_app.py -v
+# Run a single test class or method:
+python -m pytest test_app.py::TestRegister::test_register_success -v
 ```
 
 Tests use Flask's test client with a fresh isolated SQLite temp file per test (no external server needed). 30 tests cover auth, matches, billing, premium schema, and static routes.
@@ -29,10 +31,11 @@ python app.py
 
 The app has two layers:
 
-**Frontend** — three HTML pages served by Flask:
-- `index.html` — main SPA with Tracker, Stats, and Insights views
-- `login.html` — registration and login forms
-- `profile.html` — match history for authenticated users
+**Frontend** — HTML pages served by Flask:
+- `home.html` — landing/marketing page (`/home`)
+- `index.html` — main SPA with Tracker, Stats, and Insights views (`/`)
+- `login.html` — registration and login forms (`/login`)
+- `profile.html` — match history and account settings for authenticated users (`/profile`)
 
 **Backend** — `app.py` (Flask + SQLite):
 - Serves all static files
@@ -73,17 +76,33 @@ Auth endpoints (no auth required):
 - `POST /api/auth/register` — create account
 - `POST /api/auth/login` — start session
 - `POST /api/auth/logout` — clear session
-- `GET /api/auth/me` — check session
+- `GET /api/auth/me` — check session (returns `username`, `first_name`, `last_name`, `is_premium`, `subscription_status`)
+
+Auth endpoints (`@login_required`):
+- `PUT /api/auth/profile` — update username, first_name, last_name
+- `POST /api/auth/change-password` — change password (body: `{current_password, new_password}`)
 
 Match endpoints (`@login_required`):
 - `GET /api/matches` — fetch user's match history (ordered by `id DESC` — newest first)
 - `POST /api/matches` — save a completed match (body: `{config, stats, result}`)
 
+Billing endpoints (Stripe):
+- `POST /api/billing/checkout` — create Stripe Checkout session; returns `{url}`
+- `POST /api/billing/portal` — open Stripe customer portal; returns `{url}`
+- `POST /api/billing/webhook` — Stripe webhook handler (no auth); sets `is_premium` based on subscription status
+
 ### Database Schema
 
 `tennis.db` (SQLite, created automatically on startup):
-- `users(id, username, email, password_hash, created_at)`
+- `users(id, username, email, password_hash, is_premium, stripe_customer_id, subscription_status, first_name, last_name, created_at)` — new columns are added via migration in `init_db()` so old DBs are upgraded automatically
 - `matches(id, user_id, config, stats, result, played_at)` — `config`/`stats`/`result` stored as JSON strings
+
+### Stripe / Billing
+
+Billing is optional — the app runs without it, returning 503 on billing endpoints. To enable, set these environment variables:
+- `STRIPE_SECRET_KEY` — Stripe secret key
+- `STRIPE_PRICE_ID` — recurring price ID for the premium subscription
+- `STRIPE_WEBHOOK_SECRET` — for webhook signature verification
 
 ### Deployment
 

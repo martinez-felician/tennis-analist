@@ -424,6 +424,7 @@ nav { display: flex; gap: 6px; }
     max-height: 100vh; overflow-y: auto;
     box-shadow: 0 24px 64px rgba(0,0,0,0.6);
 }
+.setup-back-btn { align-self: flex-start; margin-bottom: -8px; }
 .setup-logo {
     font-family: 'Playfair Display', serif;
     font-size: 1.6rem; font-weight: 700;
@@ -946,3 +947,109 @@ nav { display: flex; gap: 6px; }
 /* Ensure content sits above geo shapes */
 .home-page { position: relative; z-index: 1; }
 header     { z-index: 10; }
+
+/* ── NAV DROPDOWN ────────────────────────────── */
+.nav-dropdown { position: relative; }
+
+.nav-dropdown-btn {
+    padding: 8px 20px;
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.nav-dropdown-btn:hover { color: var(--gold); border-color: rgba(201,168,76,0.5); }
+
+.nav-dropdown-menu {
+    display: none;
+    position: absolute; right: 0; top: calc(100% + 8px);
+    background: var(--forest-mid);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: var(--radius-lg);
+    min-width: 190px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+    z-index: 200; overflow: hidden;
+}
+.nav-dropdown-menu.open { display: flex; flex-direction: column; }
+
+.nav-drop-item {
+    padding: 13px 20px;
+    color: var(--ivory-dim);
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 500;
+    background: transparent; border: none;
+    text-align: left; cursor: pointer; width: 100%;
+    transition: background 0.15s, color 0.15s;
+    display: block;
+}
+.nav-drop-item:hover { background: var(--forest-light); color: var(--gold); }
+.nav-drop-logout {
+    color: rgba(255,100,100,0.8);
+    border-top: 1px solid rgba(201,168,76,0.1);
+}
+.nav-drop-logout:hover { color: rgba(255,100,100,1); background: rgba(255,100,100,0.06); }
+
+/* ── PROFILE TABS ────────────────────────────── */
+.profile-tabs {
+    display: flex; gap: 4px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: var(--radius); padding: 4px;
+    margin-bottom: 1.5rem;
+}
+.profile-tab {
+    flex: 1; padding: 9px;
+    border: none; border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+}
+.profile-tab.active {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: var(--forest); font-weight: 700;
+}
+
+/* ── ACCOUNT SETTINGS ────────────────────────── */
+.settings-section {
+    background: var(--forest-mid);
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.settings-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--ivory); margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+}
+.settings-form {
+    display: flex; flex-direction: column;
+    gap: 14px; max-width: 480px;
+}
+.settings-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.sub-plan-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 50px;
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--text-dim); margin-bottom: 1rem;
+}
+.sub-plan-badge.premium { color: var(--gold); border-color: rgba(201,168,76,0.4); }
+
+@media (max-width: 480px) {
+    .settings-section { padding: 18px 16px; }
+    .settings-row { grid-template-columns: 1fr; }
+}

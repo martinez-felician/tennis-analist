@@ -1,4 +1,5 @@
 // --- State ---
+let loggedInUsername = 'Player';
 let matchConfig = { playerName: 'Player', sets: 3, gamesPerSet: 6, deuce: true, tiebreak: true, finalSetTiebreak: false, tiebreakLength: 7, startServing: true };
 let inTiebreak = false;
 let matchOver = false;
@@ -813,8 +814,7 @@ function selectOpt(btn) {
 function startMatch() {
   const getVal = group => document.querySelector(`.setup-opts[data-group="${group}"] .setup-opt.active`)?.dataset.value;
 
-  const name = document.getElementById('input-name').value.trim();
-  matchConfig.playerName = name || 'Player';
+  matchConfig.playerName = loggedInUsername;
   matchConfig.sets = parseInt(getVal('sets')) || 3;
   matchConfig.gamesPerSet = parseInt(getVal('games')) || 6;
   matchConfig.deuce = getVal('deuce') !== 'no';
@@ -899,7 +899,6 @@ function resetMatch() {
   document.querySelector('.setup-opts[data-group="tblength"] [data-value="7"]').classList.add('active');
   document.querySelector('.setup-opts[data-group="role"] [data-value="serving"]').classList.add('active');
   document.getElementById('field-tblength').style.display = 'none';
-  document.getElementById('input-name').value = '';
   document.getElementById('view-setup').style.display = 'flex';
   switchView('tracker');
 }
@@ -909,10 +908,9 @@ async function initApp() {
   const res = await fetch('/api/auth/me');
   if (!res.ok) { window.location.href = '/login'; return; }
   const user = await res.json();
+  loggedInUsername = user.username || 'Player';
   const el = document.getElementById('nav-username');
   if (el) el.textContent = '👤 ' + user.username;
-  const nameInput = document.getElementById('input-name');
-  if (nameInput && !nameInput.value) nameInput.value = user.username;
 
   // Auto-save any match that was interrupted by session expiry
   const pending = localStorage.getItem('pendingMatch');
