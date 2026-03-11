@@ -1075,27 +1075,15 @@ nav { display: flex; gap: 6px; }
     /* ─ Stats: save button spans full width ─ */
     #view-stats .save-btn { grid-column: 1 / -1; }
 
-    /* ─ Home page: 2-column layout ─ */
+    /* ─ Home page: match the view pages on desktop ─ */
     .home-page {
-        max-width: 1140px;
-        padding: 2.5rem 3.5rem 4rem;
-        display: grid;
-        grid-template-columns: 1fr 360px;
-        column-gap: 2.5rem;
-        row-gap: 1.75rem;
-        align-items: start;
-    }
-
-    .home-welcome   { grid-column: 1 / -1; }
-    .home-cta       { grid-column: 1; }
-    .home-stats-row { grid-column: 1; }
-
-    #section-last-match  { grid-column: 1; }
-    #section-quick-access {
-        grid-column: 2;
-        grid-row: 2 / 6;
-        position: sticky;
-        top: 80px;
+        max-width: 1300px;
+        width: 100%;
+        padding: 40px 56px 60px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.75rem;
+        align-self: center;
     }
 
     .home-greeting { font-size: 1.9rem; }
