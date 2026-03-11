@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#22c55e">
+    <meta name="theme-color" content="#c9a84c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Tennis">
@@ -63,7 +63,7 @@
         </div>
 
         <div id="match-list" style="margin-top:1rem">
-            <p style="color:var(--muted); text-align:center; padding:2rem">Loading...</p>
+            <p style="color:var(--text-dim); text-align:center; padding:2rem">Loading...</p>
         </div>
 
     </main>
@@ -196,7 +196,7 @@
                     <div class="match-shot-breakdown">
                         <span class="shot-tag win-tag">✓ ${SHOT_LABELS[topWin] || topWin} (${stats[topWin]||0})</span>
                         <span class="shot-tag loss-tag">✗ ${SHOT_LABELS[topLoss] || topLoss} (${stats[topLoss]||0})</span>
-                        <span style="color:var(--muted);font-size:0.8rem">${config.playerName || 'Player'} · Best of ${config.sets || '?'}</span>
+                        <span style="color:var(--text-dim);font-size:0.8rem">${config.playerName || 'Player'} · Best of ${config.sets || '?'}</span>
                     </div>
                 </div>
             `;
@@ -240,7 +240,7 @@
             const listEl  = document.getElementById('match-list');
 
             if (!matches.length) {
-                listEl.innerHTML = '<p style="color:var(--muted);text-align:center;padding:2rem">No matches saved yet. Play a match and hit Save Match!</p>';
+                listEl.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:2rem">No matches saved yet. Play a match and hit Save Match!</p>';
                 document.getElementById('profile-summary').textContent = '0 matches played';
                 return;
             }

@@ -14,6 +14,9 @@
     --white:        #fafaf8;
     --red:          rgba(255,100,100,0.9);
     --red-dim:      rgba(255,100,100,0.15);
+    /* Legacy aliases — keep for any JS-generated inline styles */
+    --text:         #f5f0e8;
+    --muted:        #8a9e8c;
     --radius:       4px;
     --radius-lg:    10px;
 }
@@ -505,17 +508,17 @@ nav { display: flex; gap: 6px; }
 
 /* ── SERVE BUTTONS ───────────────────────────── */
 .serve1-btn {
-    background: linear-gradient(145deg, rgba(59,130,246,0.08) 0%, rgba(59,130,246,0.14) 100%);
-    border-color: rgba(59,130,246,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    background: linear-gradient(145deg, rgba(201,168,76,0.06) 0%, rgba(201,168,76,0.12) 100%);
+    border-color: rgba(201,168,76,0.25); box-shadow: 0 4px 20px rgba(0,0,0,0.35);
 }
-.serve1-btn:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.45), 0 0 20px rgba(59,130,246,0.2); }
+.serve1-btn:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.45), 0 0 20px rgba(201,168,76,0.18); }
 .serve2-btn {
-    background: linear-gradient(145deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.14) 100%);
-    border-color: rgba(201,168,76,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    background: linear-gradient(145deg, rgba(232,201,106,0.07) 0%, rgba(232,201,106,0.14) 100%);
+    border-color: rgba(232,201,106,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.35);
 }
-.serve2-btn:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.45), 0 0 20px rgba(201,168,76,0.2); }
-.serve1-btn .serve-num { color: #93c5fd; }
-.serve2-btn .serve-num { color: var(--gold); }
+.serve2-btn:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.45), 0 0 20px rgba(232,201,106,0.22); }
+.serve1-btn .serve-num { color: var(--gold); }
+.serve2-btn .serve-num { color: var(--gold-light); }
 .serve-num {
     font-family: 'Playfair Display', serif;
     font-size: 1.8rem; font-weight: 700; line-height: 1;
