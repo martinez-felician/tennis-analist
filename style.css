@@ -984,12 +984,19 @@ nav { display: flex; gap: 6px; }
 /* ── DESKTOP (≥ 900px) ──────────────────────── */
 @media (min-width: 900px) {
 
-    .view { padding: 40px 56px 60px; }
+    .view {
+        padding: 40px 56px 60px;
+        max-width: 1300px;
+        width: 100%;
+        align-self: center;
+    }
+
+    header { padding: 18px 40px; }
 
     /* ─ Tracker: left = scoreboard, right = step ─ */
     #view-tracker.active {
         display: grid;
-        grid-template-columns: 380px 1fr;
+        grid-template-columns: 400px 1fr;
         column-gap: 56px;
         align-items: start;
     }
@@ -1015,9 +1022,10 @@ nav { display: flex; gap: 6px; }
     #view-tracker #step-2 {
         grid-column: 2;
         grid-row: 1 / 5;
-        max-width: none;
+        max-width: 580px;
         width: 100%;
         justify-content: center;
+        justify-self: center;
     }
 
     #view-tracker #toast { grid-column: 1 / -1; }
@@ -1025,9 +1033,9 @@ nav { display: flex; gap: 6px; }
     /* 3-column method grid on desktop */
     .method-grid { grid-template-columns: 1fr 1fr 1fr; }
 
-    /* Larger outcome and serve buttons */
-    .outcome-btn { padding: 40px 24px; }
-    .serve-choice .outcome-btn { padding: 28px 24px; }
+    /* Constrain outcome buttons so they don't stretch across the screen */
+    .outcome-btn { padding: 36px 24px; }
+    .serve-choice .outcome-btn { padding: 26px 24px; }
 
     /* ─ Stats: 3-column grid ─ */
     #view-stats.active {
@@ -1037,6 +1045,7 @@ nav { display: flex; gap: 6px; }
         align-items: start;
     }
 
+    #view-stats .stats-header   { grid-column: 1 / -1; max-width: none; }
     #view-stats .section-title  { grid-column: 1 / -1; max-width: none; }
     #view-stats .overview-card  { grid-column: 1 / -1; max-width: none; }
     #view-stats .stats-row      { display: contents; }
@@ -1065,6 +1074,43 @@ nav { display: flex; gap: 6px; }
 
     /* ─ Stats: save button spans full width ─ */
     #view-stats .save-btn { grid-column: 1 / -1; }
+
+    /* ─ Home page: 2-column layout ─ */
+    .home-page {
+        max-width: 1140px;
+        padding: 2.5rem 3.5rem 4rem;
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        column-gap: 2.5rem;
+        row-gap: 1.75rem;
+        align-items: start;
+    }
+
+    .home-welcome   { grid-column: 1 / -1; }
+    .home-cta       { grid-column: 1; }
+    .home-stats-row { grid-column: 1; }
+
+    #section-last-match  { grid-column: 1; }
+    #section-quick-access {
+        grid-column: 2;
+        grid-row: 2 / 6;
+        position: sticky;
+        top: 80px;
+    }
+
+    .home-greeting { font-size: 1.9rem; }
+
+    .home-cta { padding: 26px 28px; }
+    .home-cta-icon { font-size: 2.4rem; }
+    .home-cta-text strong { font-size: 1.15rem; }
+
+    .home-stat-num { font-size: 2rem; }
+
+    /* ─ Profile: wider on desktop ─ */
+    .profile-view {
+        max-width: 920px;
+        padding: 2rem 2.5rem 4rem;
+    }
 }
 
 /* ── USER MENU (header) ──────────────────────────────────────────────────── */
@@ -1384,6 +1430,13 @@ nav { display: flex; gap: 6px; }
 .home-link-arrow { color: var(--muted); font-size: 1rem; flex-shrink: 0; }
 
 /* ── PROFILE PAGE ────────────────────────────────────────────────────────── */
+.profile-view {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 3rem;
+    width: 100%;
+}
+
 .profile-header {
     display: flex;
     align-items: center;
