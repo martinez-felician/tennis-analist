@@ -49,6 +49,9 @@
                     <input type="password" id="login-password" placeholder="Password" required>
                 </div>
                 <p class="auth-error" id="login-error"></p>
+                <p style="text-align:right; margin-top:-6px">
+                    <a href="#" class="auth-forgot-link" onclick="showForgotPassword(event)">Forgot password?</a>
+                </p>
                 <button type="submit" class="start-btn">Log In</button>
             </form>
 
@@ -64,12 +67,45 @@
                 </div>
                 <div class="auth-field">
                     <label>Password</label>
-                    <input type="password" id="reg-password" placeholder="At least 6 characters" required>
+                    <input type="password" id="reg-password" placeholder="At least 8 characters, one number" required>
                 </div>
                 <p class="auth-error"   id="reg-error"></p>
                 <p class="auth-success" id="reg-success"></p>
                 <button type="submit" class="start-btn">Create Account</button>
             </form>
+
+            <!-- Forgot Password Panel -->
+            <div id="panel-forgot" style="display:none">
+                <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:1rem">
+                    Enter your email and we'll send you a reset link.
+                </p>
+                <div class="auth-field">
+                    <label>Email</label>
+                    <input type="email" id="forgot-email" placeholder="your@email.com">
+                </div>
+                <p class="auth-error"   id="forgot-error"></p>
+                <p class="auth-success" id="forgot-success"></p>
+                <div style="display:flex; gap:10px; margin-top:4px">
+                    <button class="start-btn" onclick="handleForgotPassword()">Send Reset Link</button>
+                    <button class="start-btn" style="background:transparent; border:1px solid rgba(201,168,76,0.3); color:var(--text-dim)" onclick="showTab('login')">Back</button>
+                </div>
+            </div>
+
+            <!-- Reset Password Panel -->
+            <div id="panel-reset" style="display:none">
+                <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:1rem">Choose a new password.</p>
+                <div class="auth-field">
+                    <label>New Password</label>
+                    <input type="password" id="reset-pw" placeholder="At least 8 characters, one number">
+                </div>
+                <div class="auth-field">
+                    <label>Confirm Password</label>
+                    <input type="password" id="reset-pw-conf" placeholder="Repeat new password">
+                </div>
+                <p class="auth-error"   id="reset-error"></p>
+                <p class="auth-success" id="reset-success"></p>
+                <button class="start-btn" onclick="handleResetPassword()">Set New Password</button>
+            </div>
         </div>
     </div>
 
@@ -77,8 +113,61 @@
         function showTab(tab) {
             document.getElementById('form-login').style.display    = tab === 'login'    ? 'flex' : 'none';
             document.getElementById('form-register').style.display = tab === 'register' ? 'flex' : 'none';
+            document.getElementById('panel-forgot').style.display  = 'none';
+            document.getElementById('panel-reset').style.display   = 'none';
             document.getElementById('tab-login').classList.toggle('active',    tab === 'login');
             document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+        }
+
+        function showForgotPassword(e) {
+            e.preventDefault();
+            document.getElementById('form-login').style.display    = 'none';
+            document.getElementById('form-register').style.display = 'none';
+            document.getElementById('panel-forgot').style.display  = 'block';
+            document.getElementById('panel-reset').style.display   = 'none';
+            document.getElementById('tab-login').classList.remove('active');
+            document.getElementById('tab-register').classList.remove('active');
+        }
+
+        async function handleForgotPassword() {
+            const errEl = document.getElementById('forgot-error');
+            const sucEl = document.getElementById('forgot-success');
+            errEl.textContent = ''; sucEl.textContent = '';
+            const email = document.getElementById('forgot-email').value.trim();
+            if (!email) { errEl.textContent = 'Email is required.'; return; }
+            const res  = await fetch('/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (res.ok) sucEl.textContent = data.message;
+            else        errEl.textContent = data.error;
+        }
+
+        async function handleResetPassword() {
+            const errEl = document.getElementById('reset-error');
+            const sucEl = document.getElementById('reset-success');
+            errEl.textContent = ''; sucEl.textContent = '';
+            const pw   = document.getElementById('reset-pw').value;
+            const conf = document.getElementById('reset-pw-conf').value;
+            if (pw !== conf) { errEl.textContent = 'Passwords do not match.'; return; }
+            if (pw.length < 8 || !/\d/.test(pw)) {
+                errEl.textContent = 'Password must be at least 8 characters and contain a number.'; return;
+            }
+            const token = new URLSearchParams(location.search).get('reset');
+            const res   = await fetch('/api/auth/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, password: pw }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                sucEl.textContent = data.message + ' You can now log in.';
+                setTimeout(() => { history.replaceState({}, '', '/login'); showTab('login'); }, 2500);
+            } else {
+                errEl.textContent = data.error;
+            }
         }
 
         function redirectAfterAuth() {
@@ -110,6 +199,10 @@
             sucEl.textContent = '';
             const email    = document.getElementById('reg-email').value;
             const password = document.getElementById('reg-password').value;
+            if (password.length < 8 || !/\d/.test(password)) {
+                errEl.textContent = 'Password must be at least 8 characters and contain at least one number.';
+                return;
+            }
             const res  = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -138,7 +231,16 @@
         }
 
         // Pre-select Register tab if coming from save-before-signup flow
-        if (new URLSearchParams(location.search).get('pending') === '1') showTab('register');
+        const _params = new URLSearchParams(location.search);
+        if (_params.get('pending') === '1') showTab('register');
+        if (_params.get('reset')) {
+            document.getElementById('form-login').style.display    = 'none';
+            document.getElementById('form-register').style.display = 'none';
+            document.getElementById('panel-forgot').style.display  = 'none';
+            document.getElementById('panel-reset').style.display   = 'block';
+            document.getElementById('tab-login').classList.remove('active');
+            document.getElementById('tab-register').classList.remove('active');
+        }
     </script>
 </body>
 </html>

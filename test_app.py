@@ -6,8 +6,10 @@ Run with: python -m pytest test_app.py -v
 
 import json
 import os
+import secrets
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 
 import app as flask_app
 
@@ -21,6 +23,9 @@ class BaseTestCase(unittest.TestCase):
 
         flask_app.app.config['TESTING'] = True
         flask_app.app.config['SECRET_KEY'] = 'test-secret'
+        flask_app.app.config['SESSION_COOKIE_SECURE'] = False
+        flask_app.app.config['RATELIMIT_ENABLED'] = False
+        flask_app.limiter.reset()
         self.client = flask_app.app.test_client()
 
     def tearDown(self):
@@ -33,12 +38,12 @@ class BaseTestCase(unittest.TestCase):
         except OSError:
             pass  # Windows may keep the file locked briefly; temp dir cleans up on reboot
 
-    def _register(self, username='testuser', email='test@example.com', password='pass123'):
+    def _register(self, username='testuser', email='test@example.com', password='Pass1234'):
         return self.client.post('/api/auth/register', json={
             'username': username, 'email': email, 'password': password,
         })
 
-    def _login(self, email='test@example.com', password='pass123'):
+    def _login(self, email='test@example.com', password='Pass1234'):
         return self.client.post('/api/auth/login', json={
             'email': email, 'password': password,
         })
@@ -289,48 +294,48 @@ class TestChangePassword(BaseTestCase):
 
     def test_change_password_success(self):
         res = self.client.post('/api/auth/change-password', json={
-            'current_password': 'pass123', 'new_password': 'newpass456',
+            'current_password': 'Pass1234', 'new_password': 'Newpass456',
         })
         self.assertEqual(res.status_code, 200)
 
     def test_new_password_works_for_login(self):
         self.client.post('/api/auth/change-password', json={
-            'current_password': 'pass123', 'new_password': 'newpass456',
+            'current_password': 'Pass1234', 'new_password': 'Newpass456',
         })
         self.client.post('/api/auth/logout')
-        res = self._login(password='newpass456')
+        res = self._login(password='Newpass456')
         self.assertEqual(res.status_code, 200)
 
     def test_old_password_rejected_after_change(self):
         self.client.post('/api/auth/change-password', json={
-            'current_password': 'pass123', 'new_password': 'newpass456',
+            'current_password': 'Pass1234', 'new_password': 'Newpass456',
         })
         self.client.post('/api/auth/logout')
-        res = self._login(password='pass123')
+        res = self._login(password='Pass1234')
         self.assertEqual(res.status_code, 401)
 
     def test_change_password_wrong_current(self):
         res = self.client.post('/api/auth/change-password', json={
-            'current_password': 'wrongpass', 'new_password': 'newpass456',
+            'current_password': 'wrongpass', 'new_password': 'Newpass456',
         })
         self.assertEqual(res.status_code, 401)
 
     def test_change_password_too_short(self):
         res = self.client.post('/api/auth/change-password', json={
-            'current_password': 'pass123', 'new_password': 'abc',
+            'current_password': 'Pass1234', 'new_password': 'abc',
         })
         self.assertEqual(res.status_code, 400)
 
     def test_change_password_missing_fields(self):
         res = self.client.post('/api/auth/change-password', json={
-            'current_password': 'pass123',
+            'current_password': 'Pass1234',
         })
         self.assertEqual(res.status_code, 400)
 
     def test_change_password_requires_auth(self):
         self.client.post('/api/auth/logout')
         res = self.client.post('/api/auth/change-password', json={
-            'current_password': 'pass123', 'new_password': 'newpass456',
+            'current_password': 'Pass1234', 'new_password': 'Newpass456',
         })
         self.assertEqual(res.status_code, 401)
 
@@ -524,6 +529,185 @@ class TestStaticRoutes(BaseTestCase):
 
     def test_unknown_route_returns_404(self):
         self.assertEqual(self.client.get('/does-not-exist').status_code, 404)
+
+    def test_logo_served(self):
+        self.assertEqual(self.client.get('/logo.svg').status_code, 200)
+
+
+# ── Delete account ────────────────────────────────────────────────────────────
+
+class TestDeleteAccount(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self._register()
+        self._login()
+
+    def test_delete_account_success(self):
+        res = self.client.delete('/api/auth/account')
+        self.assertEqual(res.status_code, 200)
+
+    def test_delete_account_clears_session(self):
+        self.client.delete('/api/auth/account')
+        res = self.client.get('/api/auth/me')
+        self.assertEqual(res.status_code, 401)
+
+    def test_delete_account_removes_matches(self):
+        self.client.post('/api/matches', json={'config': {}, 'stats': {}, 'result': {}})
+        self.client.delete('/api/auth/account')
+        # Re-register a new user — DB should be clean (no foreign key violations)
+        self._register(username='user2', email='user2@example.com')
+        self._login(email='user2@example.com')
+        self.assertEqual(self.client.get('/api/matches').get_json(), [])
+
+    def test_delete_account_requires_auth(self):
+        self.client.post('/api/auth/logout')
+        res = self.client.delete('/api/auth/account')
+        self.assertEqual(res.status_code, 401)
+
+
+# ── Export CSV ────────────────────────────────────────────────────────────────
+
+class TestExportCSV(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self._register()
+        self._login()
+
+    def test_export_csv_requires_auth(self):
+        self.client.post('/api/auth/logout')
+        res = self.client.get('/api/matches/export')
+        self.assertEqual(res.status_code, 401)
+
+    def test_export_csv_empty(self):
+        res = self.client.get('/api/matches/export')
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('text/csv', res.content_type)
+
+    def test_export_csv_header_row(self):
+        res = self.client.get('/api/matches/export')
+        data = res.data.decode('utf-8')
+        self.assertIn('match_id', data)
+        self.assertIn('win_rate_pct', data)
+
+    def test_export_csv_content_disposition(self):
+        res = self.client.get('/api/matches/export')
+        self.assertIn('attachment', res.headers.get('Content-Disposition', ''))
+
+    def test_export_csv_with_matches(self):
+        self.client.post('/api/matches', json={
+            'config': {'playerName': 'Alice', 'opponentName': 'Bob'},
+            'stats':  {'ace': 3, 'df': 1, 'fh-win': 5},
+            'result': {'won': True, 'player1Sets': 2, 'player2Sets': 0},
+        })
+        res = self.client.get('/api/matches/export')
+        self.assertEqual(res.status_code, 200)
+        data = res.data.decode('utf-8')
+        self.assertIn('Alice', data)
+        self.assertIn('Won', data)
+
+    def test_export_csv_lost_match(self):
+        self.client.post('/api/matches', json={
+            'config': {'playerName': 'Carlos'},
+            'stats':  {'df': 5, 'bh-ue': 3},
+            'result': {'won': False, 'player1Sets': 0, 'player2Sets': 2},
+        })
+        res = self.client.get('/api/matches/export')
+        data = res.data.decode('utf-8')
+        self.assertIn('Lost', data)
+
+
+# ── Forgot / reset password ───────────────────────────────────────────────────
+
+class TestForgotPassword(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self._register()
+
+    def test_forgot_password_unknown_email_still_200(self):
+        res = self.client.post('/api/auth/forgot-password',
+                               json={'email': 'nobody@example.com'})
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('reset link', res.get_json()['message'].lower())
+
+    def test_forgot_password_missing_email(self):
+        res = self.client.post('/api/auth/forgot-password', json={})
+        self.assertEqual(res.status_code, 400)
+
+    def test_forgot_password_known_email_creates_token(self):
+        res = self.client.post('/api/auth/forgot-password',
+                               json={'email': 'test@example.com'})
+        self.assertEqual(res.status_code, 200)
+        conn = flask_app.get_db()
+        row = conn.execute('SELECT * FROM reset_tokens').fetchone()
+        conn.close()
+        self.assertIsNotNone(row)
+
+
+class TestResetPassword(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self._register()
+
+    def _insert_token(self, expired=False, used=False):
+        conn = flask_app.get_db()
+        user = conn.execute('SELECT id FROM users WHERE email = ?',
+                            ('test@example.com',)).fetchone()
+        token = secrets.token_urlsafe(32)
+        delta = -timedelta(hours=2) if expired else timedelta(hours=1)
+        expires = (datetime.utcnow() + delta).isoformat()
+        used_flag = 1 if used else 0
+        conn.execute(
+            'INSERT INTO reset_tokens (user_id, token, expires_at, used) VALUES (?, ?, ?, ?)',
+            (user['id'], token, expires, used_flag)
+        )
+        conn.commit()
+        conn.close()
+        return token
+
+    def test_reset_missing_fields(self):
+        res = self.client.post('/api/auth/reset-password', json={})
+        self.assertEqual(res.status_code, 400)
+
+    def test_reset_weak_password(self):
+        res = self.client.post('/api/auth/reset-password',
+                               json={'token': 'tok', 'password': 'short'})
+        self.assertEqual(res.status_code, 400)
+
+    def test_reset_invalid_token(self):
+        res = self.client.post('/api/auth/reset-password',
+                               json={'token': 'bad-token', 'password': 'Newpass456'})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('invalid', res.get_json()['error'].lower())
+
+    def test_reset_expired_token(self):
+        token = self._insert_token(expired=True)
+        res = self.client.post('/api/auth/reset-password',
+                               json={'token': token, 'password': 'Newpass456'})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('expired', res.get_json()['error'].lower())
+
+    def test_reset_used_token(self):
+        token = self._insert_token(used=True)
+        res = self.client.post('/api/auth/reset-password',
+                               json={'token': token, 'password': 'Newpass456'})
+        self.assertEqual(res.status_code, 400)
+
+    def test_reset_success(self):
+        token = self._insert_token()
+        res = self.client.post('/api/auth/reset-password',
+                               json={'token': token, 'password': 'Newpass999'})
+        self.assertEqual(res.status_code, 200)
+        # New password should now work for login
+        self.assertEqual(self._login(password='Newpass999').status_code, 200)
+
+    def test_reset_token_marked_used_after_success(self):
+        token = self._insert_token()
+        self.client.post('/api/auth/reset-password',
+                         json={'token': token, 'password': 'Newpass999'})
+        # Second use of same token should fail
+        res = self.client.post('/api/auth/reset-password',
+                               json={'token': token, 'password': 'Another123'})
+        self.assertEqual(res.status_code, 400)
 
 
 if __name__ == '__main__':

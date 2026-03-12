@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#c9a84c">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -70,13 +71,19 @@
         <!-- Match History Tab -->
         <div id="tab-history" style="margin-top:1rem">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem">
-                <span></span>
+                <button class="manage-sub-btn" onclick="exportCSV()">Export CSV</button>
                 <button class="manage-sub-btn" id="manage-sub-btn" style="display:none" onclick="manageSubscription()">
                     Manage Subscription
                 </button>
             </div>
             <div id="match-list">
                 <p style="color:var(--text-dim); text-align:center; padding:2rem">Loading...</p>
+            </div>
+            <div class="chart-section" id="win-rate-chart-section" style="display:none; margin-top:1.5rem">
+                <h3 class="settings-title" style="margin-bottom:1rem">Win Rate Trend</h3>
+                <div style="position:relative; height:220px">
+                    <canvas id="win-rate-chart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -117,7 +124,7 @@
                     </div>
                     <div class="auth-field">
                         <label>New Password</label>
-                        <input type="password" id="s-new-pw" placeholder="At least 6 characters">
+                        <input type="password" id="s-new-pw" placeholder="At least 8 characters, one number">
                     </div>
                     <div class="auth-field">
                         <label>Confirm New Password</label>
@@ -249,7 +256,7 @@
 
             if (!cur || !nw || !conf) { errEl.textContent = 'All fields are required.'; return; }
             if (nw !== conf)          { errEl.textContent = 'New passwords do not match.'; return; }
-            if (nw.length < 6)        { errEl.textContent = 'New password must be at least 6 characters.'; return; }
+            if (nw.length < 8 || !/\d/.test(nw)) { errEl.textContent = 'New password must be at least 8 characters and contain at least one number.'; return; }
 
             const res  = await fetch('/api/auth/change-password', {
                 method: 'POST',
@@ -285,6 +292,59 @@
                 btn.disabled = false;
                 alert(data.error || 'Something went wrong. Please try again.');
             }
+        }
+
+        function exportCSV() {
+            window.location.href = '/api/matches/export';
+        }
+
+        let _winRateChartInstance = null;
+
+        function renderWinRateChart(matches) {
+            const ordered = [...matches].reverse();
+            if (ordered.length < 2) return;
+            const labels = [];
+            const data   = [];
+            ordered.forEach((m, i) => {
+                const date = new Date(m.played_at).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+                labels.push(date);
+                const wins = ordered.slice(0, i + 1).filter(x => {
+                    try { return JSON.parse(x.result).won; } catch (e) { return false; }
+                }).length;
+                data.push(Math.round((wins / (i + 1)) * 100));
+            });
+            document.getElementById('win-rate-chart-section').style.display = 'block';
+            if (_winRateChartInstance) _winRateChartInstance.destroy();
+            const ctx = document.getElementById('win-rate-chart').getContext('2d');
+            _winRateChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Win Rate %',
+                        data,
+                        borderColor: '#c9a84c',
+                        backgroundColor: 'rgba(201,168,76,0.12)',
+                        pointBackgroundColor: '#c9a84c',
+                        tension: 0.35,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100,
+                             ticks: { color: '#8a9e8c', callback: v => v + '%' },
+                             grid:  { color: 'rgba(201,168,76,0.08)' } },
+                        x: { ticks: { color: '#8a9e8c' }, grid: { color: 'rgba(201,168,76,0.08)' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f5f0e8' } },
+                        tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } }
+                    }
+                }
+            });
         }
 
         async function manageSubscription() {
@@ -443,6 +503,7 @@
             const res     = await fetch('/api/matches');
             const matches = await res.json();
             window._profileMatches = matches;
+            renderWinRateChart(matches);
             const listEl  = document.getElementById('match-list');
 
             if (!matches.length) {

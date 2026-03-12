@@ -1119,6 +1119,18 @@ header     { z-index: 10; }
     .settings-row { grid-template-columns: 1fr; }
 }
 
+/* ── FORGOT PASSWORD LINK ───────────────────── */
+.auth-forgot-link { color: var(--text-dim); font-size: 0.825rem; text-decoration: none; }
+.auth-forgot-link:hover { color: var(--gold); text-decoration: underline; }
+
+/* ── WIN RATE CHART ─────────────────────────── */
+.chart-section {
+    background: var(--forest-mid);
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
 /* ── UNDO BUTTON ─────────────────────────────── */
 .undo-row { display: flex; justify-content: flex-end; padding: 4px 0 8px; }
 .undo-btn {

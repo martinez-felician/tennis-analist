@@ -1,16 +1,33 @@
 import os
+import csv
+import io
 import json
+import logging
 import secrets
+import smtplib
 import sqlite3
+import sys
+from datetime import datetime, timedelta
+from email.mime.text import MIMEText
 from functools import wraps
 
 import stripe
-from flask import Flask, request, jsonify, session, send_from_directory
+from flask import Flask, request, jsonify, session, send_from_directory, Response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    stream=sys.stderr,
+)
+logger = logging.getLogger('tennis_analyst')
 
 limiter = Limiter(
     get_remote_address,
@@ -37,6 +54,14 @@ else:
 stripe.api_key            = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_PRICE_ID           = os.environ.get('STRIPE_PRICE_ID', '')
 STRIPE_WEBHOOK_SECRET     = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
+# SMTP config — set these as environment variables to enable password reset emails
+SMTP_HOST = os.environ.get('SMTP_HOST', '')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
+SMTP_USER = os.environ.get('SMTP_USER', '')
+SMTP_PASS = os.environ.get('SMTP_PASS', '')
+SMTP_FROM = os.environ.get('SMTP_FROM', SMTP_USER)
+APP_BASE_URL = os.environ.get('APP_BASE_URL', 'http://localhost:5000')
 
 
 # ── Database ──────────────────────────────────────────────────────────────────
@@ -68,6 +93,13 @@ def init_db():
             result     TEXT    NOT NULL,
             played_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS reset_tokens (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id    INTEGER NOT NULL REFERENCES users(id),
+            token      TEXT    UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            used       INTEGER NOT NULL DEFAULT 0
+        );
     ''')
     # Migrate existing DB: add new columns if they don't exist yet
     for col, definition in [
@@ -92,6 +124,33 @@ def login_required(f):
             return jsonify({'error': 'Not authenticated'}), 401
         return f(*args, **kwargs)
     return decorated
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def send_reset_email(to_address, token):
+    if not SMTP_HOST or not SMTP_USER:
+        logger.warning('SMTP not configured — skipping reset email for %s', to_address)
+        return False
+    reset_url = f'{APP_BASE_URL}/login?reset={token}'
+    body = (
+        f'Click the link below to reset your Tennis Analyst password (expires in 1 hour):\n\n'
+        f'{reset_url}\n\n'
+        f'If you did not request this, ignore this email.'
+    )
+    msg = MIMEText(body)
+    msg['Subject'] = 'Reset your Tennis Analyst password'
+    msg['From']    = SMTP_FROM
+    msg['To']      = to_address
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_FROM, [to_address], msg.as_string())
+        return True
+    except Exception as e:
+        logger.error('Failed to send reset email to %s: %s', to_address, e)
+        return False
 
 
 # ── Static files ──────────────────────────────────────────────────────────────
@@ -152,8 +211,8 @@ def register():
         return jsonify({'error': 'All fields are required'}), 400
     if len(username) < 2:
         return jsonify({'error': 'Username must be at least 2 characters'}), 400
-    if len(password) < 6:
-        return jsonify({'error': 'Password must be at least 6 characters'}), 400
+    if len(password) < 8 or not any(c.isdigit() for c in password):
+        return jsonify({'error': 'Password must be at least 8 characters and contain at least one number'}), 400
 
     try:
         conn = get_db()
@@ -163,6 +222,7 @@ def register():
         )
         conn.commit()
         conn.close()
+        logger.info('New user registered — username: %s, email: %s', username, email)
         return jsonify({'message': 'Account created'}), 201
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Username or email already in use'}), 409
@@ -181,6 +241,8 @@ def login():
     conn.close()
 
     if not user or not check_password_hash(user['password_hash'], password):
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        logger.warning('Failed login attempt — email: %s, IP: %s', email, ip)
         return jsonify({'error': 'Invalid email or password'}), 401
 
     session['user_id']  = user['id']
@@ -192,6 +254,56 @@ def login():
 def logout():
     session.clear()
     return jsonify({'message': 'Logged out'})
+
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+@limiter.limit("5 per hour")
+def forgot_password():
+    data  = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    conn = get_db()
+    user = conn.execute('SELECT id, email FROM users WHERE email = ?', (email,)).fetchone()
+    if user:
+        token      = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+        conn.execute(
+            'INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+            (user['id'], token, expires_at.isoformat())
+        )
+        conn.commit()
+        send_reset_email(user['email'], token)
+    conn.close()
+    return jsonify({'message': 'If that email exists, a reset link has been sent.'}), 200
+
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+@limiter.limit("10 per hour")
+def reset_password():
+    data     = request.get_json(silent=True) or {}
+    token    = (data.get('token')    or '').strip()
+    password =  data.get('password') or ''
+    if not token or not password:
+        return jsonify({'error': 'Token and new password are required'}), 400
+    if len(password) < 8 or not any(c.isdigit() for c in password):
+        return jsonify({'error': 'Password must be at least 8 characters and contain a number'}), 400
+    conn = get_db()
+    row = conn.execute(
+        'SELECT id, user_id, expires_at, used FROM reset_tokens WHERE token = ?', (token,)
+    ).fetchone()
+    if not row or row['used']:
+        conn.close()
+        return jsonify({'error': 'Invalid or already-used reset link'}), 400
+    if datetime.utcnow() > datetime.fromisoformat(row['expires_at']):
+        conn.close()
+        return jsonify({'error': 'Reset link has expired'}), 400
+    conn.execute('UPDATE users SET password_hash = ? WHERE id = ?',
+                 (generate_password_hash(password), row['user_id']))
+    conn.execute('UPDATE reset_tokens SET used = 1 WHERE id = ?', (row['id'],))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Password reset successfully'})
 
 
 @app.route('/api/auth/me')
@@ -258,8 +370,8 @@ def change_password():
 
     if not current_password or not new_password:
         return jsonify({'error': 'Both fields are required'}), 400
-    if len(new_password) < 6:
-        return jsonify({'error': 'New password must be at least 6 characters'}), 400
+    if len(new_password) < 8 or not any(c.isdigit() for c in new_password):
+        return jsonify({'error': 'New password must be at least 8 characters and contain at least one number'}), 400
 
     conn = get_db()
     user = conn.execute('SELECT password_hash FROM users WHERE id = ?', (session['user_id'],)).fetchone()
@@ -302,6 +414,48 @@ def get_matches():
     ).fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])
+
+
+@app.route('/api/matches/export', methods=['GET'])
+@login_required
+def export_matches_csv():
+    WIN_KEYS  = ['ace','fh-win','bh-win','vol','oh','drop','opp-err']
+    LOSS_KEYS = ['df','fh-ue','bh-ue','fh-fe','bh-fe','opp-win','miss-return','vol-err','oh-err','drop-err']
+    conn = get_db()
+    rows = conn.execute(
+        'SELECT id, config, stats, result, played_at FROM matches '
+        'WHERE user_id = ? ORDER BY id ASC',
+        (session['user_id'],)
+    ).fetchall()
+    conn.close()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['match_id','played_at','player_name','opponent_name',
+                     'sets_won','sets_lost','result','total_points',
+                     'points_won','points_lost','win_rate_pct'])
+    for r in rows:
+        try: config = json.loads(r['config'])
+        except Exception: config = {}
+        try: stats  = json.loads(r['stats'])
+        except Exception: stats  = {}
+        try: result = json.loads(r['result'])
+        except Exception: result = {}
+        pts_won  = sum(stats.get(k, 0) for k in WIN_KEYS)
+        pts_lost = sum(stats.get(k, 0) for k in LOSS_KEYS)
+        total    = pts_won + pts_lost
+        win_rate = round(pts_won / total * 100, 1) if total else 0
+        writer.writerow([
+            r['id'], r['played_at'],
+            config.get('playerName',''), config.get('opponentName',''),
+            result.get('player1Sets',''), result.get('player2Sets',''),
+            'Won' if result.get('won') else 'Lost',
+            total, pts_won, pts_lost, win_rate,
+        ])
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=match_history.csv'}
+    )
 
 
 @app.route('/api/matches', methods=['POST'])
@@ -417,6 +571,15 @@ def _update_subscription(customer_id, status):
     )
     conn.commit()
     conn.close()
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return e
+    logger.exception('Unhandled exception: %s', e)
+    return jsonify({'error': 'An unexpected error occurred'}), 500
 
 
 # ── Run ───────────────────────────────────────────────────────────────────────
