@@ -8,9 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 python -m pytest test_app.py -v
 # Run a single test class or method:
 python -m pytest test_app.py::TestRegister::test_register_success -v
+
+# Security-focused tests:
+python -m pytest test_security.py -v
 ```
 
-Tests use Flask's test client with a fresh isolated SQLite temp file per test (no external server needed). 30 tests cover auth, matches, billing, premium schema, and static routes.
+Tests use Flask's test client with a fresh isolated SQLite temp file per test (no external server needed). 30 tests cover auth, matches, billing, premium schema, and static routes. `test_security.py` covers additional security scenarios.
 
 **Windows note:** SQLite file locks may prevent temp file cleanup after tests — this is harmless, the OS reclaims them on reboot.
 
@@ -104,6 +107,28 @@ Billing is optional — the app runs without it, returning 503 on billing endpoi
 - `STRIPE_PRICE_ID` — recurring price ID for the premium subscription
 - `STRIPE_WEBHOOK_SECRET` — for webhook signature verification
 
+### Demo Data
+
+`seed.py` creates two demo accounts with realistic match history:
+
+```bash
+python seed.py
+```
+
+| Account | Email | Password |
+|---|---|---|
+| Free | carlos@demo.com | tennis123 |
+| Premium | serena@demo.com | tennis123 |
+
+Re-running `seed.py` is idempotent — it updates existing users and replaces their matches.
+
 ### Deployment
 
-Designed for PythonAnywhere WSGI. `init_db()` is called at module level (not inside `__main__`) so it runs under both local dev and WSGI. Secret key is persisted in `.secret_key` file or via `SECRET_KEY` environment variable.
+Designed for PythonAnywhere WSGI at `fymc.pythonanywhere.com`. `init_db()` is called at module level (not inside `__main__`) so it runs under both local dev and WSGI. Secret key is persisted in `.secret_key` file or via `SECRET_KEY` environment variable.
+
+To deploy updates:
+```bash
+# On PythonAnywhere bash console:
+cd tennis-analist && git pull origin main
+# Then click Reload on the Web tab.
+```
