@@ -142,9 +142,28 @@
                 </div>
             </div>
 
+            <!-- Danger Zone -->
+            <div class="settings-section settings-danger">
+                <h3 class="settings-title danger-title">Danger Zone</h3>
+                <p style="color:var(--text-dim); font-size:0.88rem; margin-bottom:1rem">
+                    Permanently delete your account and all match history. This cannot be undone.
+                    If you have an active subscription, cancel it from the Subscription section above first.
+                </p>
+                <p class="auth-error" id="delete-err"></p>
+                <button class="danger-btn" id="delete-account-btn" onclick="confirmDeleteAccount()">Delete My Account</button>
+            </div>
+
         </div>
 
     </main>
+
+    <!-- Match Detail Modal -->
+    <div id="match-modal" class="match-modal-overlay" style="display:none" onclick="closeMatchModal(event)">
+        <div class="match-modal-card" id="match-modal-card">
+            <button class="match-modal-close" onclick="closeMatchModal(null)">✕</button>
+            <div id="match-modal-body"></div>
+        </div>
+    </div>
 
     <script>
         const WIN_KEYS  = ['ace','fh-win','bh-win','vol','oh','drop','opp-err'];
@@ -166,6 +185,16 @@
             'opp-win':'Opponent Winner', 'miss-return':'Missed Return',
             'vol-err':'Volley Error', 'oh-err':'Overhead Error', 'drop-err':'Drop Shot Error',
         };
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         let currentUser = null;
 
@@ -276,16 +305,16 @@
         function buildMatchMeta(config) {
             const tags = [];
             if (config.opponentName && config.opponentName !== 'Opponent')
-                tags.push(`vs ${config.opponentName}`);
+                tags.push(`vs ${escapeHtml(config.opponentName)}`);
             if (config.clubName)
-                tags.push(config.clubName);
+                tags.push(escapeHtml(config.clubName));
             if (config.phase && config.phase !== 'friendly')
-                tags.push(PHASE_LABELS[config.phase] || config.phase);
+                tags.push(PHASE_LABELS[config.phase] || escapeHtml(config.phase));
             if (!tags.length) return '';
             return `<div class="match-meta">${tags.map(t => `<span class="match-meta-tag">${t}</span>`).join('')}</div>`;
         }
 
-        function buildPreviewCard(m) {
+        function buildPreviewCard(m, idx) {
             let config = {}, stats = {}, result = {};
             try { config = JSON.parse(m.config); } catch (e) {}
             try { stats  = JSON.parse(m.stats);  } catch (e) {}
@@ -305,7 +334,7 @@
                 : '—';
 
             return `
-                <div class="match-history-card">
+                <div class="match-history-card" onclick="openMatchModal(${idx})" style="cursor:pointer">
                     <div class="match-history-top">
                         <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
                         <span class="match-score">${score}</span>
@@ -325,7 +354,7 @@
             `;
         }
 
-        function buildFullCard(m) {
+        function buildFullCard(m, idx) {
             let config = {}, stats = {}, result = {};
             try { config = JSON.parse(m.config); } catch (e) {}
             try { stats  = JSON.parse(m.stats);  } catch (e) {}
@@ -350,7 +379,7 @@
                 : '—';
 
             return `
-                <div class="match-history-card">
+                <div class="match-history-card" onclick="openMatchModal(${idx})" style="cursor:pointer">
                     <div class="match-history-top">
                         <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
                         <span class="match-score">${score}</span>
@@ -365,7 +394,7 @@
                     <div class="match-shot-breakdown">
                         <span class="shot-tag win-tag">✓ ${SHOT_LABELS[topWin] || topWin} (${stats[topWin]||0})</span>
                         <span class="shot-tag loss-tag">✗ ${SHOT_LABELS[topLoss] || topLoss} (${stats[topLoss]||0})</span>
-                        <span style="color:var(--text-dim);font-size:0.8rem">${config.playerName || 'Player'} · Best of ${config.sets || '?'}</span>
+                        <span style="color:var(--text-dim);font-size:0.8rem">${escapeHtml(config.playerName || 'Player')} · Best of ${config.sets || '?'}</span>
                     </div>
                 </div>
             `;
@@ -413,6 +442,7 @@
 
             const res     = await fetch('/api/matches');
             const matches = await res.json();
+            window._profileMatches = matches;
             const listEl  = document.getElementById('match-list');
 
             if (!matches.length) {
@@ -430,13 +460,97 @@
                 `${n} match${n !== 1 ? 'es' : ''} · ${totalWins} win${totalWins !== 1 ? 's' : ''}`;
 
             if (currentUser.is_premium) {
-                listEl.innerHTML = matches.map(buildFullCard).join('');
+                listEl.innerHTML = matches.map((m, i) => buildFullCard(m, i)).join('');
             } else {
                 const preview = matches.slice(0, 2);
                 const locked  = matches.length - preview.length;
-                let html = preview.map(buildPreviewCard).join('');
+                let html = preview.map((m, i) => buildPreviewCard(m, i)).join('');
                 if (locked > 0) html += buildLockedCard(locked);
                 listEl.innerHTML = html;
+            }
+        }
+
+        function openMatchModal(idx) {
+            const m = (window._profileMatches || [])[idx];
+            if (!m) return;
+            let config = {}, stats = {}, result = {};
+            try { config = JSON.parse(m.config); } catch (e) {}
+            try { stats  = JSON.parse(m.stats);  } catch (e) {}
+            try { result = JSON.parse(m.result); } catch (e) {}
+
+            const date = new Date(m.played_at).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+            const won  = result.won;
+            const totalWon  = WIN_KEYS.reduce((s, k) => s + (stats[k] || 0), 0);
+            const totalLost = LOSS_KEYS.reduce((s, k) => s + (stats[k] || 0), 0);
+            const total     = totalWon + totalLost;
+            const winRate   = total > 0 ? Math.round((totalWon / total) * 100) + '%' : '—';
+
+            const s1Total  = (stats.serve1stIn || 0) + (stats.serve1stOut || 0);
+            const s2Total  = (stats.serve2ndIn || 0) + (stats.df || 0);
+            const retTotal = (stats.returnWon  || 0) + (stats.returnLost  || 0);
+
+            const statRows = (keys) => keys.map(k =>
+                `<div class="modal-stat-row"><span>${SHOT_LABELS[k] || k}</span><span class="modal-stat-val">${stats[k] || 0}</span></div>`
+            ).join('');
+
+            document.getElementById('match-modal-body').innerHTML = `
+                <div class="modal-match-header">
+                    <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
+                    <span class="modal-match-score">${result.player1Sets ?? '?'}–${result.player2Sets ?? '?'} sets</span>
+                    <span class="modal-match-date">${escapeHtml(date)}</span>
+                </div>
+                ${buildMatchMeta(config)}
+                <div class="modal-meta-row">
+                    <span>${escapeHtml(config.playerName || 'Player')}</span>
+                    <span>Best of ${config.sets || '?'}</span>
+                    <span>${total} points</span>
+                    <span>Win rate <strong>${winRate}</strong></span>
+                </div>
+                <div class="modal-stats-grid">
+                    <div class="modal-stat-col">
+                        <div class="modal-col-title green">Winners</div>
+                        ${statRows(WIN_KEYS)}
+                    </div>
+                    <div class="modal-stat-col">
+                        <div class="modal-col-title red">Errors</div>
+                        ${statRows(LOSS_KEYS)}
+                    </div>
+                </div>
+                <div class="modal-serve-section">
+                    <div class="modal-col-title">Serve &amp; Return</div>
+                    <div class="modal-stat-row"><span>1st Serve In</span><span class="modal-stat-val">${s1Total > 0 ? Math.round(((stats.serve1stIn||0)/s1Total)*100)+'%' : '—'}</span></div>
+                    <div class="modal-stat-row"><span>2nd Serve In</span><span class="modal-stat-val">${s2Total > 0 ? Math.round(((stats.serve2ndIn||0)/s2Total)*100)+'%' : '—'}</span></div>
+                    <div class="modal-stat-row"><span>Return Points Won</span><span class="modal-stat-val">${retTotal > 0 ? Math.round(((stats.returnWon||0)/retTotal)*100)+'%' : '—'}</span></div>
+                </div>
+            `;
+            document.getElementById('match-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMatchModal(e) {
+            if (e && e.target !== document.getElementById('match-modal')) return;
+            document.getElementById('match-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        async function confirmDeleteAccount() {
+            const errEl = document.getElementById('delete-err');
+            errEl.textContent = '';
+            const confirmed = confirm('Are you absolutely sure? This will permanently delete your account and ALL match history. This cannot be undone.');
+            if (!confirmed) return;
+            const reconfirm = prompt('Type DELETE to confirm:');
+            if (reconfirm !== 'DELETE') {
+                errEl.textContent = 'Confirmation text did not match.';
+                return;
+            }
+            const btn = document.getElementById('delete-account-btn');
+            btn.disabled = true; btn.textContent = 'Deleting…';
+            const res = await fetch('/api/auth/account', { method: 'DELETE' });
+            if (res.ok) {
+                window.location.href = '/login';
+            } else {
+                btn.disabled = false; btn.textContent = 'Delete My Account';
+                errEl.textContent = 'Failed to delete account. Please try again.';
             }
         }
 

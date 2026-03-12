@@ -26,6 +26,7 @@ let player2Games = 0;
 let player1Sets = 0;
 let player2Sets = 0;
 let currentOutcome = null;
+let pointHistory = [];
 
 let stats = {
   // wins
@@ -618,6 +619,87 @@ function selectOutcome(won) {
   document.getElementById('step-2').classList.add('active');
 }
 
+// --- XSS sanitization ---
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// --- State snapshot helpers ---
+function captureState() {
+  pointHistory.push({
+    p1Points: player1Points, p2Points: player2Points,
+    p1Games:  player1Games,  p2Games:  player2Games,
+    p1Sets:   player1Sets,   p2Sets:   player2Sets,
+    inTiebreak, tiebreakPointCount, isServing,
+    servingBeforeTiebreak, matchOver,
+    stats: { ...stats },
+  });
+}
+
+function persistState() {
+  if (!matchStarted || matchOver) return;
+  localStorage.setItem('ta-match-state', JSON.stringify({
+    matchConfig,
+    player1Points, player2Points,
+    player1Games,  player2Games,
+    player1Sets,   player2Sets,
+    inTiebreak, tiebreakPointCount, isServing,
+    servingBeforeTiebreak, matchOver, matchStarted,
+    stats,
+  }));
+}
+
+function restoreState() {
+  const raw = localStorage.getItem('ta-match-state');
+  if (!raw) return false;
+  try {
+    const s = JSON.parse(raw);
+    Object.assign(matchConfig, s.matchConfig);
+    player1Points = s.player1Points; player2Points = s.player2Points;
+    player1Games  = s.player1Games;  player2Games  = s.player2Games;
+    player1Sets   = s.player1Sets;   player2Sets   = s.player2Sets;
+    inTiebreak = s.inTiebreak;
+    tiebreakPointCount = s.tiebreakPointCount;
+    isServing = s.isServing;
+    servingBeforeTiebreak = s.servingBeforeTiebreak;
+    matchOver = s.matchOver;
+    matchStarted = s.matchStarted;
+    Object.keys(stats).forEach(k => { stats[k] = 0; });
+    Object.assign(stats, s.stats);
+    return true;
+  } catch (e) { return false; }
+}
+
+function undoLastPoint() {
+  if (!pointHistory.length) { showToast('Nothing to undo.'); return; }
+  const s = pointHistory.pop();
+  player1Points = s.p1Points; player2Points = s.p2Points;
+  player1Games  = s.p1Games;  player2Games  = s.p2Games;
+  player1Sets   = s.p1Sets;   player2Sets   = s.p2Sets;
+  inTiebreak = s.inTiebreak;
+  tiebreakPointCount = s.tiebreakPointCount;
+  isServing = s.isServing;
+  servingBeforeTiebreak = s.servingBeforeTiebreak;
+  matchOver = s.matchOver;
+  Object.keys(stats).forEach(k => { stats[k] = 0; });
+  Object.assign(stats, s.stats);
+  if (!matchOver) {
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) saveBtn.style.display = 'none';
+  }
+  persistState();
+  updateScore();
+  updateStats();
+  showInitialStep();
+  showToast('Last point undone.');
+}
+
 // --- Step 2: Back ---
 function goBack() {
   document.getElementById('step-2').classList.remove('active');
@@ -627,6 +709,7 @@ function goBack() {
 
 // --- Step 2: Method ---
 function selectMethod(key) {
+  captureState();
   stats[key] = (stats[key] || 0) + 1;
 
   if (isServing) {
@@ -643,6 +726,7 @@ function selectMethod(key) {
   currentServeType = null;
   addPoint(currentOutcome);
   showInitialStep();
+  persistState();
 }
 
 // --- Scoring ---
@@ -938,11 +1022,13 @@ function startMatch() {
 function selectServe(type) {
   if (type === 'df') {
     // Double fault: 1st serve faulted, 2nd serve faulted — point lost immediately
+    captureState();
     stats.df = (stats.df || 0) + 1;
     stats.serve1stOut++;
     currentServeType = null;
     addPoint(false);
     showInitialStep();
+    persistState();
     return;
   }
   currentServeType = type;
@@ -1008,6 +1094,8 @@ function resetMatch() {
   const oppInput  = document.getElementById('setup-opponent');
   const clubInput = document.getElementById('setup-club');
   matchStarted = false;
+  pointHistory = [];
+  localStorage.removeItem('ta-match-state');
   if (oppInput)  oppInput.value  = '';
   if (clubInput) clubInput.value = '';
   document.getElementById('view-setup').style.display = 'flex';
@@ -1121,6 +1209,7 @@ async function saveMatch() {
   });
   if (res.ok) {
     btn.textContent = 'Saved ✓';
+    localStorage.removeItem('ta-match-state');
     showToast('Match saved to your profile!');
   } else if (res.status === 401) {
     // Session expired — stash match data so it survives the login redirect
@@ -1139,6 +1228,18 @@ async function saveMatch() {
 // --- Init ---
 updateScore();
 initApp().then(() => {
+  // Restore an interrupted in-progress match
+  if (!matchStarted && restoreState()) {
+    document.getElementById('scoreboard-player').textContent   = matchConfig.playerName;
+    document.getElementById('scoreboard-opponent').textContent = matchConfig.opponentName;
+    document.getElementById('view-setup').style.display = 'none';
+    updateScore();
+    updateStats();
+    showInitialStep();
+    if (matchOver) showSaveButton();
+    showToast('Match restored from last session.');
+  }
+}).then(() => {
   // Handle deep links from home page quick-access cards
   const params = new URLSearchParams(location.search);
   if (params.get('stats') === 'all') {

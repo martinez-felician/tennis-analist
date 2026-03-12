@@ -6,9 +6,18 @@ from functools import wraps
 
 import stripe
 from flask import Flask, request, jsonify, session, send_from_directory
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://",
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH  = os.path.join(BASE_DIR, 'tennis.db')
@@ -131,6 +140,7 @@ def serve_logo():
 # ── Auth API ──────────────────────────────────────────────────────────────────
 
 @app.route('/api/auth/register', methods=['POST'])
+@limiter.limit("10 per hour")
 def register():
     data     = request.get_json(silent=True) or {}
     if not isinstance(data, dict): data = {}
@@ -159,6 +169,7 @@ def register():
 
 
 @app.route('/api/auth/login', methods=['POST'])
+@limiter.limit("20 per hour")
 def login():
     data     = request.get_json(silent=True) or {}
     if not isinstance(data, dict): data = {}
@@ -263,6 +274,19 @@ def change_password():
     conn.commit()
     conn.close()
     return jsonify({'message': 'Password updated successfully'})
+
+
+@app.route('/api/auth/account', methods=['DELETE'])
+@login_required
+def delete_account():
+    user_id = session['user_id']
+    conn = get_db()
+    conn.execute('DELETE FROM matches WHERE user_id = ?', (user_id,))
+    conn.execute('DELETE FROM users WHERE id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    session.clear()
+    return jsonify({'message': 'Account deleted'}), 200
 
 
 # ── Matches API ───────────────────────────────────────────────────────────────
@@ -400,4 +424,5 @@ def _update_subscription(customer_id, status):
 init_db()  # runs on every startup (local dev & PythonAnywhere WSGI)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(debug=debug, port=5000)
