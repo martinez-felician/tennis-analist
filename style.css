@@ -54,6 +54,10 @@ header {
 
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-icon { font-size: 1.4rem; }
+.brand-logo {
+    width: 16px !important; height: 16px !important; border-radius: 4px;
+    display: block; flex-shrink: 0;
+}
 .brand-name {
     font-family: 'Playfair Display', serif;
     font-size: 1.2rem;
@@ -538,6 +542,7 @@ nav { display: flex; gap: 6px; }
     header { padding: 10px 14px; }
     .brand-name { font-size: 1rem; }
     .brand-icon { font-size: 1.1rem; }
+    .brand-logo { width: 14px; height: 14px; border-radius: 4px; }
     .nav-btn { padding: 6px 10px; font-size: 0.78rem; }
     .view { padding: 14px 12px 32px; gap: 14px; }
     .scoreboard-players { font-size: 0.65rem; }
@@ -687,6 +692,7 @@ nav { display: flex; gap: 6px; }
     color: var(--gold); align-self: center;
 }
 .auth-logo {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
     font-family: 'Playfair Display', serif;
     font-size: 1.6rem; font-weight: 700;
     color: var(--ivory); text-align: center; letter-spacing: 0.02em;
@@ -815,6 +821,13 @@ nav { display: flex; gap: 6px; }
     box-shadow: 0 4px 20px rgba(0,0,0,0.35);
 }
 .profile-avatar { font-size: 2.4rem; line-height: 1; }
+.profile-avatar-logo {
+    width: 58px; height: 58px; border-radius: 50%;
+    display: block; flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(201,168,76,0.35);
+}
+.setup-logo-img { width: 20px; height: 20px; border-radius: 5px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+.auth-logo-img  { width: 56px; height: 56px; border-radius: 14px; }
 .profile-name { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--ivory); }
 .profile-sub { color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
 
@@ -915,6 +928,58 @@ nav { display: flex; gap: 6px; }
 .match-card-locked div { flex: 1; min-width: 160px; }
 .match-card-locked div strong { color: var(--ivory-dim); font-size: 0.92rem; }
 .match-card-locked div p { color: var(--text-dim); font-size: 0.82rem; margin: 4px 0 0; }
+
+/* ── SETUP TEXT INPUT ────────────────────────── */
+.setup-input {
+    width: 100%; background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(201,168,76,0.15);
+    color: var(--ivory); padding: 10px 14px;
+    border-radius: var(--radius); font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+.setup-input::placeholder { color: rgba(138,158,140,0.45); }
+.setup-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.1); }
+
+/* ── ONBOARDING OVERLAY ──────────────────────── */
+.onboarding-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(13,31,15,0.97);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.onboarding-card {
+    background: rgba(22,41,24,0.98);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 20px; padding: 36px 28px;
+    max-width: 380px; width: 100%;
+    display: flex; flex-direction: column; gap: 20px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.onboarding-dots { display: flex; justify-content: center; gap: 8px; }
+.onboard-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(201,168,76,0.2);
+    transition: background 0.2s;
+}
+.onboard-dot.active { background: var(--gold); }
+.onboard-step { display: none; flex-direction: column; gap: 12px; align-items: center; text-align: center; }
+.onboard-step.active { display: flex; }
+.onboard-icon { font-size: 2.8rem; }
+.onboard-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem; font-weight: 700; color: var(--ivory);
+}
+.onboard-desc { color: var(--text-dim); font-size: 0.88rem; line-height: 1.65; }
+.onboard-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+
+/* ── MATCH META (opponent, club, phase) ─────── */
+.match-meta { color: var(--text-dim); font-size: 0.78rem; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.match-meta-tag {
+    background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.12);
+    border-radius: 20px; padding: 2px 9px; font-size: 0.75rem; color: var(--ivory-dim);
+}
 
 /* ── GEOMETRIC SHAPES ────────────────────────── */
 .geo-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
