@@ -12,14 +12,15 @@
     <meta name="theme-color" content="#c9a84c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Tennis">
+    <meta name="apple-mobile-web-app-title" content="Tennis Analyst">
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.svg">
 </head>
 <body>
 
     <header>
         <div class="brand">
-            <span class="brand-icon">🎾</span>
+            <img src="/logo.svg" alt="" class="brand-logo">
             <span class="brand-name">Tennis Analyst</span>
         </div>
         <div class="nav-dropdown">
@@ -36,7 +37,7 @@
     <main class="view active profile-view">
 
         <div class="profile-header">
-            <div class="profile-avatar">🎾</div>
+            <img src="/logo.svg" alt="" class="profile-avatar-logo">
             <div style="flex:1">
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <h2 class="profile-name" id="profile-username">—</h2>
@@ -148,6 +149,14 @@
     <script>
         const WIN_KEYS  = ['ace','fh-win','bh-win','vol','oh','drop','opp-err'];
         const LOSS_KEYS = ['df','fh-ue','bh-ue','fh-fe','bh-fe','opp-win','miss-return','vol-err','oh-err','drop-err'];
+
+        const PHASE_LABELS = {
+            'friendly':    'Friendly',
+            'round-robin': 'Round Robin',
+            'quarters':    'Quarterfinals',
+            'semis':       'Semifinals',
+            'final':       'Final',
+        };
 
         const SHOT_LABELS = {
             'ace':'Ace', 'fh-win':'Forehand Winner', 'bh-win':'Backhand Winner',
@@ -264,6 +273,18 @@
             }
         }
 
+        function buildMatchMeta(config) {
+            const tags = [];
+            if (config.opponentName && config.opponentName !== 'Opponent')
+                tags.push(`vs ${config.opponentName}`);
+            if (config.clubName)
+                tags.push(config.clubName);
+            if (config.phase && config.phase !== 'friendly')
+                tags.push(PHASE_LABELS[config.phase] || config.phase);
+            if (!tags.length) return '';
+            return `<div class="match-meta">${tags.map(t => `<span class="match-meta-tag">${t}</span>`).join('')}</div>`;
+        }
+
         function buildPreviewCard(m) {
             let config = {}, stats = {}, result = {};
             try { config = JSON.parse(m.config); } catch (e) {}
@@ -290,6 +311,7 @@
                         <span class="match-score">${score}</span>
                         <span class="match-date">${date}</span>
                     </div>
+                    ${buildMatchMeta(config)}
                     <div class="match-history-bottom">
                         <span>Win rate <strong>${winRate}</strong></span>
                         <span>1st serve pts <strong>${firstServePct}</strong></span>
@@ -334,6 +356,7 @@
                         <span class="match-score">${score}</span>
                         <span class="match-date">${date}</span>
                     </div>
+                    ${buildMatchMeta(config)}
                     <div class="match-history-bottom">
                         <span>Win rate <strong>${winRate}</strong></span>
                         <span>1st serve pts <strong>${firstServePct}</strong></span>

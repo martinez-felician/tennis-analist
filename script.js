@@ -1,8 +1,19 @@
 // --- State ---
 let loggedInUsername = 'Player';
-let matchConfig = { playerName: 'Player', sets: 3, gamesPerSet: 6, deuce: true, tiebreak: true, finalSetTiebreak: false, tiebreakLength: 7, startServing: true };
+let isPremium = false;
+let isAuthenticated = false;
+
+const PHASE_LABELS = {
+  'friendly':    'Friendly',
+  'round-robin': 'Round Robin',
+  'quarters':    'Quarterfinals',
+  'semis':       'Semifinals',
+  'final':       'Final',
+};
+let matchConfig = { playerName: 'Player', opponentName: 'Opponent', clubName: '', phase: 'friendly', sets: 3, gamesPerSet: 6, deuce: true, tiebreak: true, finalSetTiebreak: false, tiebreakLength: 7, startServing: true };
 let inTiebreak = false;
 let matchOver = false;
+let matchStarted = false;
 let isServing = true;
 let currentServeType = null;
 let tiebreakPointCount = 0;
@@ -440,18 +451,19 @@ function generatePracticePlan(weaknesses, strengths) {
   return sessions;
 }
 
-function analyzePerformance() {
-  const totalPoints = Object.values(stats).reduce((s, v) => s + v, 0);
+function analyzePerformance(statsData) {
+  const s = statsData || stats;
+  const totalPoints = Object.values(s).reduce((t, v) => t + v, 0);
   if (totalPoints < 5) return null;
 
   const strengths = WIN_METHODS
-    .map(m => ({ ...m, count: stats[m.key] || 0 }))
+    .map(m => ({ ...m, count: s[m.key] || 0 }))
     .filter(m => m.count > 0)
     .sort((a, b) => b.count - a.count)
     .slice(0, 2);
 
   const weaknesses = LOSS_METHODS
-    .map(m => ({ ...m, count: stats[m.key] || 0 }))
+    .map(m => ({ ...m, count: s[m.key] || 0 }))
     .filter(m => m.count > 0)
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
@@ -459,31 +471,72 @@ function analyzePerformance() {
   return { strengths, weaknesses };
 }
 
-function renderInsights() {
-  const result = analyzePerformance();
-  const emptyEl = document.getElementById('insights-empty');
+async function renderInsights() {
+  const emptyEl   = document.getElementById('insights-empty');
   const contentEl = document.getElementById('insights-content');
 
+  // Try current match first; fall back to all-time stats if not enough data
+  let insightStats = stats;
+  let insightSource = null;   // null = current match, number = match count
+  const currentTotal = Object.values(stats).reduce((s, v) => s + v, 0);
+
+  if (currentTotal < 5 && isAuthenticated) {
+    try {
+      const res     = await fetch('/api/matches');
+      const matches = await res.json();
+      if (matches.length > 0) {
+        // Free users: last 2 matches; premium: all matches
+        const pool   = isPremium ? matches : matches.slice(0, 2);
+        const merged = {};
+        pool.forEach(m => {
+          try {
+            const s = JSON.parse(m.stats);
+            Object.keys(s).forEach(k => { merged[k] = (merged[k] || 0) + (s[k] || 0); });
+          } catch (e) {}
+        });
+        insightStats  = merged;
+        insightSource = pool.length;
+      }
+    } catch (e) {}
+  }
+
+  const result = analyzePerformance(insightStats);
+
   if (!result) {
-    emptyEl.style.display = 'flex';
+    emptyEl.style.display   = 'flex';
     contentEl.style.display = 'none';
     return;
   }
 
-  emptyEl.style.display = 'none';
+  emptyEl.style.display   = 'none';
   contentEl.style.display = 'flex';
 
-  const totalPoints = Object.values(stats).reduce((s, v) => s + v, 0);
-  const topWeak = result.weaknesses[0];
-  const topStr  = result.strengths[0];
+  const totalPoints = Object.values(insightStats).reduce((s, v) => s + v, 0);
+  const sourceLabel = insightSource !== null
+    ? `Across your last ${insightSource} match${insightSource !== 1 ? 'es' : ''}`
+    : 'This match';
 
   const summaryHTML = `
     <div class="plan-summary">
-      <div class="plan-summary-title">Match Analysis · ${totalPoints} points tracked</div>
-      ${topWeak ? `<div class="plan-summary-row"><span class="insight-badge red">Weakness</span>${topWeak.emoji} ${topWeak.label} — ${topWeak.count}x</div>` : ''}
-      ${topStr  ? `<div class="plan-summary-row"><span class="insight-badge green">Strength</span>${topStr.emoji} ${topStr.label} — ${topStr.count}x</div>` : ''}
+      <div class="plan-summary-title">${sourceLabel} · ${totalPoints} points</div>
+      ${result.weaknesses.map(w => `<div class="plan-summary-row"><span class="insight-badge red">Weakness</span>${w.emoji} ${w.label} — ${w.count}x</div>`).join('')}
+      ${result.strengths.map(s  => `<div class="plan-summary-row"><span class="insight-badge green">Strength</span>${s.emoji} ${s.label} — ${s.count}x</div>`).join('')}
     </div>
   `;
+
+  if (!isPremium) {
+    contentEl.innerHTML = summaryHTML + `
+      <div class="match-card-locked">
+        <span class="lock-icon">🔒</span>
+        <div>
+          <strong>Practice Plan — Premium only</strong>
+          <p>Upgrade to get a personalized multi-day drill plan built around your weaknesses.</p>
+        </div>
+        <button class="upgrade-btn" onclick="window.location.href='/profile'">Upgrade — $7/mo</button>
+      </div>
+    `;
+    return;
+  }
 
   const plan = generatePracticePlan(result.weaknesses, result.strengths);
 
@@ -521,7 +574,21 @@ function switchView(view) {
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
   document.getElementById('nav-' + view).classList.add('active');
-  if (view === 'stats') switchStatsTab(currentStatsTab);
+
+  const setupEl = document.getElementById('view-setup');
+  if (view === 'tracker') {
+    // Re-show setup screen only if no match is running
+    if (setupEl && !matchStarted) setupEl.style.display = 'flex';
+  } else {
+    // Stats / Insights — always hide setup so they're immediately accessible
+    if (setupEl) setupEl.style.display = 'none';
+  }
+
+  if (view === 'stats') {
+    // Default to all-time tab when no match is running; stay on current tab mid-match
+    const tab = matchStarted ? currentStatsTab : 'all';
+    switchStatsTab(tab);
+  }
   if (view === 'insights') renderInsights();
 }
 
@@ -744,12 +811,14 @@ async function switchStatsTab(tab) {
 
   const saveBtn  = document.getElementById('save-btn');
   const resetBtn = document.querySelector('.reset-btn');
+  const lockEl   = document.getElementById('stats-all-lock');
 
   if (tab === 'match') {
-    document.getElementById('stats-title').textContent      = 'Match Statistics';
+    document.getElementById('stats-title').textContent       = 'Match Statistics';
     document.getElementById('stats-match-count').textContent = '';
     if (saveBtn)  saveBtn.style.display  = matchOver ? 'block' : 'none';
     if (resetBtn) resetBtn.style.display = 'block';
+    if (lockEl)   lockEl.style.display   = 'none';
     updateStats();
     return;
   }
@@ -759,6 +828,7 @@ async function switchStatsTab(tab) {
   document.getElementById('stats-match-count').textContent = 'Loading…';
   if (saveBtn)  saveBtn.style.display  = 'none';
   if (resetBtn) resetBtn.style.display = 'none';
+  if (lockEl)   lockEl.style.display   = 'none';
 
   try {
     const res     = await fetch('/api/matches');
@@ -767,6 +837,36 @@ async function switchStatsTab(tab) {
     if (!matches.length) {
       document.getElementById('stats-match-count').textContent = 'No saved matches yet';
       updateStats({});
+      return;
+    }
+
+    if (!isPremium) {
+      // Free users: preview stats from the 2 most recent matches only
+      const preview = matches.slice(0, 2);
+      const merged  = {};
+      preview.forEach(m => {
+        try {
+          const s = JSON.parse(m.stats);
+          Object.keys(s).forEach(k => { merged[k] = (merged[k] || 0) + (s[k] || 0); });
+        } catch (e) {}
+      });
+      const locked = matches.length - preview.length;
+      document.getElementById('stats-match-count').textContent =
+        `Preview: ${preview.length} of ${matches.length} match${matches.length !== 1 ? 'es' : ''}`;
+      updateStats(merged);
+      if (lockEl && locked > 0) {
+        lockEl.innerHTML = `
+          <div class="match-card-locked">
+            <span class="lock-icon">🔒</span>
+            <div>
+              <strong>${locked} more match${locked !== 1 ? 'es' : ''} not included</strong>
+              <p>Upgrade to Premium to see your full all-time statistics across all matches.</p>
+            </div>
+            <button class="upgrade-btn" onclick="window.location.href='/profile'">Upgrade — $7/mo</button>
+          </div>
+        `;
+        lockEl.style.display = 'block';
+      }
       return;
     }
 
@@ -814,17 +914,22 @@ function selectOpt(btn) {
 function startMatch() {
   const getVal = group => document.querySelector(`.setup-opts[data-group="${group}"] .setup-opt.active`)?.dataset.value;
 
-  matchConfig.playerName = loggedInUsername;
-  matchConfig.sets = parseInt(getVal('sets')) || 3;
-  matchConfig.gamesPerSet = parseInt(getVal('games')) || 6;
-  matchConfig.deuce = getVal('deuce') !== 'no';
-  matchConfig.tiebreak = getVal('tiebreak') !== 'no';
+  matchConfig.playerName      = loggedInUsername;
+  matchConfig.opponentName    = (document.getElementById('setup-opponent')?.value.trim()) || 'Opponent';
+  matchConfig.clubName        = (document.getElementById('setup-club')?.value.trim())     || '';
+  matchConfig.phase           = getVal('phase') || 'friendly';
+  matchConfig.sets            = parseInt(getVal('sets')) || 3;
+  matchConfig.gamesPerSet     = parseInt(getVal('games')) || 6;
+  matchConfig.deuce           = getVal('deuce') !== 'no';
+  matchConfig.tiebreak        = getVal('tiebreak') !== 'no';
   matchConfig.finalSetTiebreak = getVal('finalset') === 'tiebreak';
-  matchConfig.tiebreakLength = parseInt(getVal('tblength')) || 7;
-  matchConfig.startServing = getVal('role') !== 'returning';
+  matchConfig.tiebreakLength  = parseInt(getVal('tblength')) || 7;
+  matchConfig.startServing    = getVal('role') !== 'returning';
 
   isServing = matchConfig.startServing;
-  document.getElementById('scoreboard-player').textContent = matchConfig.playerName;
+  matchStarted = true;
+  document.getElementById('scoreboard-player').textContent   = matchConfig.playerName;
+  document.getElementById('scoreboard-opponent').textContent = matchConfig.opponentName;
   document.getElementById('view-setup').style.display = 'none';
   updateScore();
   showInitialStep();
@@ -890,15 +995,21 @@ function resetMatch() {
 
   // Reset setup screen defaults
   document.querySelectorAll('.setup-opt').forEach(b => b.classList.remove('active'));
-  document.querySelector('.setup-opts[data-group="sets"] [data-value="3"]').classList.add('active');
-  document.querySelector('.setup-opts[data-group="games"] [data-value="6"]').classList.add('active');
-  document.querySelector('.setup-opts[data-group="deuce"] [data-value="yes"]').classList.add('active');
-  document.querySelector('.setup-opts[data-group="tiebreak"] [data-value="yes"]').classList.add('active');
-  document.querySelector('.setup-opts[data-group="finalset"] [data-value="full"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="phase"]   [data-value="friendly"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="sets"]    [data-value="3"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="games"]   [data-value="6"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="deuce"]   [data-value="yes"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="tiebreak"][data-value="yes"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="finalset"][data-value="full"]').classList.add('active');
   document.getElementById('field-finalset').style.display = 'flex';
-  document.querySelector('.setup-opts[data-group="tblength"] [data-value="7"]').classList.add('active');
-  document.querySelector('.setup-opts[data-group="role"] [data-value="serving"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="tblength"][data-value="7"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="role"]    [data-value="serving"]').classList.add('active');
   document.getElementById('field-tblength').style.display = 'none';
+  const oppInput  = document.getElementById('setup-opponent');
+  const clubInput = document.getElementById('setup-club');
+  matchStarted = false;
+  if (oppInput)  oppInput.value  = '';
+  if (clubInput) clubInput.value = '';
   document.getElementById('view-setup').style.display = 'flex';
   switchView('tracker');
 }
@@ -906,13 +1017,22 @@ function resetMatch() {
 // --- Auth & Save ---
 async function initApp() {
   const res = await fetch('/api/auth/me');
-  if (!res.ok) { window.location.href = '/login'; return; }
+  if (!res.ok) {
+    // Anonymous — let them use the tracker freely
+    updateNavForAnonymous();
+    showOnboardingIfNeeded();
+    return;
+  }
+  isAuthenticated = true;
   const user = await res.json();
   loggedInUsername = user.username || 'Player';
+  isPremium = !!user.is_premium;
   const el = document.getElementById('nav-username');
   if (el) el.textContent = '👤 ' + user.username;
 
-  // Auto-save any match that was interrupted by session expiry
+  showOnboardingIfNeeded();
+
+  // Auto-save any match that was interrupted by session expiry or saved-before-signup
   const pending = localStorage.getItem('pendingMatch');
   if (pending) {
     localStorage.removeItem('pendingMatch');
@@ -922,12 +1042,48 @@ async function initApp() {
         headers: { 'Content-Type': 'application/json' },
         body: pending,
       });
-      if (saveRes.ok) showToast('Your previous match was saved!');
+      if (saveRes.ok) showToast('Your match was saved to your profile!');
       else            showToast('Could not recover previous match — sorry.');
     } catch (e) {
       showToast('Could not recover previous match — sorry.');
     }
   }
+}
+
+function updateNavForAnonymous() {
+  const menu = document.getElementById('nav-menu');
+  if (!menu) return;
+  const accountLink = menu.querySelector('a[href="/profile"]');
+  if (accountLink) { accountLink.href = '/login'; accountLink.innerHTML = '🔑 Log In / Sign Up'; }
+  const logoutBtn = menu.querySelector('.nav-drop-logout');
+  if (logoutBtn) logoutBtn.style.display = 'none';
+}
+
+// --- Onboarding ---
+let onboardingStep = 0;
+
+function showOnboardingIfNeeded() {
+  if (localStorage.getItem('ta-onboarded')) return;
+  const overlay = document.getElementById('onboarding-overlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function onboardStep(dir) {
+  const totalSteps = 3;
+  document.getElementById('ostep-' + onboardingStep).classList.remove('active');
+  document.getElementById('odot-'  + onboardingStep).classList.remove('active');
+  onboardingStep += dir;
+
+  if (onboardingStep >= totalSteps) {
+    localStorage.setItem('ta-onboarded', '1');
+    document.getElementById('onboarding-overlay').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('ostep-' + onboardingStep).classList.add('active');
+  document.getElementById('odot-'  + onboardingStep).classList.add('active');
+  document.getElementById('onboard-prev').style.visibility = onboardingStep > 0 ? 'visible' : 'hidden';
+  document.getElementById('onboard-next').textContent = onboardingStep === totalSteps - 1 ? 'Start Tracking' : 'Next →';
 }
 
 async function logoutUser() {
@@ -942,27 +1098,33 @@ function showSaveButton() {
 
 async function saveMatch() {
   const btn = document.getElementById('save-btn');
+  const matchPayload = {
+    config: matchConfig,
+    stats,
+    result: { player1Sets, player2Sets, won: player1Sets > player2Sets },
+  };
+
+  if (!isAuthenticated) {
+    localStorage.setItem('pendingMatch', JSON.stringify(matchPayload));
+    showToast('Create an account to save your match!');
+    btn.textContent = 'Create Account →';
+    setTimeout(() => { window.location.href = '/login?pending=1'; }, 1800);
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = 'Saving…';
   const res = await fetch('/api/matches', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      config: matchConfig,
-      stats:  stats,
-      result: { player1Sets, player2Sets, won: player1Sets > player2Sets },
-    }),
+    body: JSON.stringify(matchPayload),
   });
   if (res.ok) {
     btn.textContent = 'Saved ✓';
     showToast('Match saved to your profile!');
   } else if (res.status === 401) {
     // Session expired — stash match data so it survives the login redirect
-    localStorage.setItem('pendingMatch', JSON.stringify({
-      config: matchConfig,
-      stats,
-      result: { player1Sets, player2Sets, won: player1Sets > player2Sets },
-    }));
+    localStorage.setItem('pendingMatch', JSON.stringify(matchPayload));
     btn.disabled = false;
     btn.textContent = 'Save Match';
     showToast('Session expired — logging you in to save your match…');
@@ -982,7 +1144,6 @@ initApp().then(() => {
   if (params.get('stats') === 'all') {
     history.replaceState({}, '', '/');
     switchView('stats');
-    switchStatsTab('all');
   } else if (params.get('view') === 'insights') {
     history.replaceState({}, '', '/');
     switchView('insights');

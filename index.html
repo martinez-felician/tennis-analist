@@ -12,14 +12,15 @@
     <meta name="theme-color" content="#c9a84c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Tennis">
+    <meta name="apple-mobile-web-app-title" content="Tennis Analyst">
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.svg">
 </head>
 <body>
 
     <header>
         <div class="brand">
-            <span class="brand-icon">🎾</span>
+            <img src="/logo.svg" alt="" class="brand-logo">
             <span class="brand-name">Tennis Analyst</span>
         </div>
         <nav>
@@ -44,7 +45,7 @@
         <div class="scoreboard-players">
             <span id="scoreboard-player">Player</span>
             <span class="vs-label">vs</span>
-            <span>Opponent</span>
+            <span id="scoreboard-opponent">Opponent</span>
         </div>
 
         <div class="serve-status returning" id="serve-status">
@@ -190,6 +191,8 @@
             <div class="stat-line"><span>Return Points Won</span><span class="stat-num" id="s-return-pct">—</span></div>
         </div>
 
+        <div id="stats-all-lock" style="display:none"></div>
+
         <button class="save-btn"  id="save-btn" style="display:none" onclick="saveMatch()">Save Match</button>
         <button class="reset-btn" onclick="resetMatch()">Reset Match</button>
 
@@ -215,8 +218,29 @@
     <div id="view-setup" class="setup-screen">
       <div class="setup-card">
         <button class="back-btn setup-back-btn" onclick="window.location.href='/home'">← Back</button>
-        <div class="setup-logo">🎾 Tennis Analyst</div>
+        <div class="setup-logo"><img src="/logo.svg" alt="" class="setup-logo-img"> Tennis Analyst</div>
         <p class="setup-sub">Configure your match</p>
+
+        <div class="setup-field">
+          <label>Opponent Name</label>
+          <input type="text" id="setup-opponent" class="setup-input" placeholder="e.g. Rafael" maxlength="40" autocomplete="off">
+        </div>
+
+        <div class="setup-field">
+          <label>Club / Venue</label>
+          <input type="text" id="setup-club" class="setup-input" placeholder="e.g. Royal Tennis Club" maxlength="60" autocomplete="off">
+        </div>
+
+        <div class="setup-field">
+          <label>Match Phase</label>
+          <div class="setup-opts" data-group="phase">
+            <button class="setup-opt active" data-value="friendly"    onclick="selectOpt(this)">Friendly</button>
+            <button class="setup-opt"        data-value="round-robin" onclick="selectOpt(this)">Round Robin</button>
+            <button class="setup-opt"        data-value="quarters"    onclick="selectOpt(this)">Quarters</button>
+            <button class="setup-opt"        data-value="semis"       onclick="selectOpt(this)">Semis</button>
+            <button class="setup-opt"        data-value="final"       onclick="selectOpt(this)">Final</button>
+          </div>
+        </div>
 
         <div class="setup-field">
           <label>Match Format</label>
@@ -278,6 +302,36 @@
 
         <button class="start-btn" onclick="startMatch()">Start Match</button>
       </div>
+    </div>
+
+    <!-- ONBOARDING OVERLAY -->
+    <div id="onboarding-overlay" class="onboarding-overlay" style="display:none">
+        <div class="onboarding-card">
+            <div class="onboarding-dots">
+                <span class="onboard-dot active" id="odot-0"></span>
+                <span class="onboard-dot"        id="odot-1"></span>
+                <span class="onboard-dot"        id="odot-2"></span>
+            </div>
+            <div class="onboard-step active" id="ostep-0">
+                <div class="onboard-icon">🎾</div>
+                <h3 class="onboard-title">Track every point</h3>
+                <p class="onboard-desc">After each point, tap through 3 quick steps: serve type → win or lose → how it ended. Takes just 3 taps per point.</p>
+            </div>
+            <div class="onboard-step" id="ostep-1">
+                <div class="onboard-icon">📊</div>
+                <h3 class="onboard-title">Live score &amp; stats</h3>
+                <p class="onboard-desc">The scoreboard updates automatically. Tap Stats at the top anytime to see a full shot breakdown as the match progresses.</p>
+            </div>
+            <div class="onboard-step" id="ostep-2">
+                <div class="onboard-icon">💡</div>
+                <h3 class="onboard-title">Save &amp; improve</h3>
+                <p class="onboard-desc">At the end of the match, save it to a profile. Premium members get a personalized practice plan built around their weaknesses.</p>
+            </div>
+            <div class="onboard-nav">
+                <button class="back-btn" id="onboard-prev" onclick="onboardStep(-1)" style="visibility:hidden">← Back</button>
+                <button class="start-btn" id="onboard-next" onclick="onboardStep(1)">Next →</button>
+            </div>
+        </div>
     </div>
 
     <script>

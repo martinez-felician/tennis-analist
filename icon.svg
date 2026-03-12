@@ -1,11 +1,66 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- App background -->
-  <rect width="512" height="512" rx="114" fill="#131f30"/>
+  <defs>
+    <radialGradient id="bg" cx="38%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#1e3920"/>
+      <stop offset="100%" stop-color="#090f0a"/>
+    </radialGradient>
+    <radialGradient id="ball" cx="36%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#e8f55a"/>
+      <stop offset="60%" stop-color="#cce030"/>
+      <stop offset="100%" stop-color="#a8b820"/>
+    </radialGradient>
+    <radialGradient id="shine" cx="38%" cy="28%" r="40%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="5" stdDeviation="10" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <clipPath id="ballClip">
+      <circle cx="256" cy="220" r="148"/>
+    </clipPath>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Gold border ring inside rounded square -->
+  <rect width="512" height="512" rx="112" fill="none" stroke="#c9a84c" stroke-width="6" opacity="0.75"/>
+
   <!-- Tennis ball -->
-  <circle cx="256" cy="256" r="190" fill="#c8e86c"/>
-  <!-- Seam curves -->
-  <path d="M 100 256 C 150 165, 185 165, 256 256 C 327 347, 362 347, 412 256"
-        stroke="white" stroke-width="22" fill="none" stroke-linecap="round"/>
-  <path d="M 100 256 C 150 347, 185 347, 256 256 C 327 165, 362 165, 412 256"
-        stroke="white" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <circle cx="256" cy="220" r="148" fill="url(#ball)" filter="url(#shadow)"/>
+
+  <!-- Ball seams clipped to ball -->
+  <g clip-path="url(#ballClip)">
+    <path d="M 136 178 C 184 100 328 100 376 178"
+          fill="none" stroke="white" stroke-width="11" stroke-linecap="round" opacity="0.65"/>
+    <path d="M 136 262 C 184 340 328 340 376 262"
+          fill="none" stroke="white" stroke-width="11" stroke-linecap="round" opacity="0.65"/>
+  </g>
+
+  <!-- Ball surface shine -->
+  <circle cx="256" cy="220" r="148" fill="url(#shine)"/>
+
+  <!-- Analytics trend line on ball -->
+  <g filter="url(#glow)" clip-path="url(#ballClip)">
+    <polyline
+      points="168,268  200,236  224,250  254,208  282,224  316,188  346,166"
+      fill="none" stroke="#c9a84c" stroke-width="7"
+      stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Data point dots -->
+  <g filter="url(#glow)">
+    <circle cx="168" cy="268" r="6.5"  fill="#c9a84c"/>
+    <circle cx="200" cy="236" r="6.5"  fill="#c9a84c"/>
+    <circle cx="224" cy="250" r="6.5"  fill="#c9a84c"/>
+    <circle cx="254" cy="208" r="6.5"  fill="#c9a84c"/>
+    <circle cx="282" cy="224" r="6.5"  fill="#c9a84c"/>
+    <circle cx="316" cy="188" r="6.5"  fill="#c9a84c"/>
+    <circle cx="346" cy="166" r="9"    fill="#e0c060"/>
+  </g>
 </svg>

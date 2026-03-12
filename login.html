@@ -12,7 +12,8 @@
     <meta name="theme-color" content="#c9a84c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Tennis">
+    <meta name="apple-mobile-web-app-title" content="Tennis Analyst">
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.svg">
 </head>
 <body>
@@ -26,7 +27,10 @@
             <div class="geo geo-5"></div>
         </div>
         <div class="auth-card">
-            <div class="auth-logo">Tennis Analyst</div>
+            <div class="auth-logo">
+                <img src="/logo.svg" alt="Tennis Analyst" class="auth-logo-img">
+                Tennis Analyst
+            </div>
             <p class="auth-sub">Track your matches. Improve your game.</p>
 
             <div class="auth-tabs">
@@ -77,6 +81,10 @@
             document.getElementById('tab-register').classList.toggle('active', tab === 'register');
         }
 
+        function redirectAfterAuth() {
+            window.location.href = localStorage.getItem('pendingMatch') ? '/' : '/home';
+        }
+
         async function handleLogin(e) {
             e.preventDefault();
             const errEl = document.getElementById('login-error');
@@ -90,7 +98,7 @@
                 }),
             });
             const data = await res.json();
-            if (res.ok) { window.location.href = '/home'; }
+            if (res.ok) { redirectAfterAuth(); }
             else        { errEl.textContent = data.error; }
         }
 
@@ -100,23 +108,37 @@
             const sucEl = document.getElementById('reg-success');
             errEl.textContent = '';
             sucEl.textContent = '';
+            const email    = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
             const res  = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username: document.getElementById('reg-username').value,
-                    email:    document.getElementById('reg-email').value,
-                    password: document.getElementById('reg-password').value,
+                    email, password,
                 }),
             });
             const data = await res.json();
             if (res.ok) {
-                sucEl.textContent = 'Account created! You can now log in.';
-                showTab('login');
+                // Auto-login immediately after registration
+                const loginRes = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+                if (loginRes.ok) {
+                    redirectAfterAuth();
+                } else {
+                    sucEl.textContent = 'Account created! You can now log in.';
+                    showTab('login');
+                }
             } else {
                 errEl.textContent = data.error;
             }
         }
+
+        // Pre-select Register tab if coming from save-before-signup flow
+        if (new URLSearchParams(location.search).get('pending') === '1') showTab('register');
     </script>
 </body>
 </html>

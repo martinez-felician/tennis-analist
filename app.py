@@ -65,6 +65,8 @@ def init_db():
         ('is_premium',          'INTEGER NOT NULL DEFAULT 0'),
         ('stripe_customer_id',  'TEXT'),
         ('subscription_status', 'TEXT'),
+        ('first_name',          'TEXT DEFAULT ""'),
+        ('last_name',           'TEXT DEFAULT ""'),
     ]:
         try:
             conn.execute(f'ALTER TABLE users ADD COLUMN {col} {definition}')
@@ -121,12 +123,17 @@ def serve_sw():
 def serve_icon():
     return send_from_directory(BASE_DIR, 'icon.svg')
 
+@app.route('/logo.svg')
+def serve_logo():
+    return send_from_directory(BASE_DIR, 'logo.svg')
+
 
 # ── Auth API ──────────────────────────────────────────────────────────────────
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
-    data     = request.get_json() or {}
+    data     = request.get_json(silent=True) or {}
+    if not isinstance(data, dict): data = {}
     username = (data.get('username') or '').strip()
     email    = (data.get('email')    or '').strip().lower()
     password =  data.get('password') or ''
@@ -153,7 +160,8 @@ def register():
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    data     = request.get_json() or {}
+    data     = request.get_json(silent=True) or {}
+    if not isinstance(data, dict): data = {}
     email    = (data.get('email')    or '').strip().lower()
     password =  data.get('password') or ''
 
@@ -181,7 +189,7 @@ def me():
         return jsonify({'authenticated': False}), 401
     conn = get_db()
     user = conn.execute(
-        'SELECT is_premium, subscription_status FROM users WHERE id = ?',
+        'SELECT is_premium, subscription_status, first_name, last_name FROM users WHERE id = ?',
         (session['user_id'],)
     ).fetchone()
     conn.close()
@@ -189,9 +197,72 @@ def me():
         'authenticated':       True,
         'user_id':             session['user_id'],
         'username':            session['username'],
+        'first_name':          user['first_name'] if user else '',
+        'last_name':           user['last_name']  if user else '',
         'is_premium':          bool(user['is_premium']) if user else False,
         'subscription_status': user['subscription_status'] if user else None,
     })
+
+
+@app.route('/api/auth/profile', methods=['PUT'])
+@login_required
+def update_profile():
+    data       = request.get_json(silent=True) or {}
+    if not isinstance(data, dict): data = {}
+    username   = (data.get('username')   or '').strip()
+    first_name = (data.get('first_name') or '').strip()
+    last_name  = (data.get('last_name')  or '').strip()
+
+    if username and len(username) < 2:
+        return jsonify({'error': 'Display name must be at least 2 characters'}), 400
+
+    conn = get_db()
+    current = conn.execute('SELECT username FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    new_username = username if username else current['username']
+
+    if username and username != current['username']:
+        exists = conn.execute('SELECT id FROM users WHERE username = ? AND id != ?',
+                              (username, session['user_id'])).fetchone()
+        if exists:
+            conn.close()
+            return jsonify({'error': 'That display name is already taken'}), 409
+
+    conn.execute(
+        'UPDATE users SET username = ?, first_name = ?, last_name = ? WHERE id = ?',
+        (new_username, first_name, last_name, session['user_id'])
+    )
+    conn.commit()
+    conn.close()
+    session['username'] = new_username
+    return jsonify({'username': new_username, 'first_name': first_name, 'last_name': last_name})
+
+
+@app.route('/api/auth/change-password', methods=['POST'])
+@login_required
+def change_password():
+    data             = request.get_json(silent=True) or {}
+    if not isinstance(data, dict): data = {}
+    current_password =  data.get('current_password') or ''
+    new_password     =  data.get('new_password')     or ''
+
+    if not current_password or not new_password:
+        return jsonify({'error': 'Both fields are required'}), 400
+    if len(new_password) < 6:
+        return jsonify({'error': 'New password must be at least 6 characters'}), 400
+
+    conn = get_db()
+    user = conn.execute('SELECT password_hash FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    if not user or not check_password_hash(user['password_hash'], current_password):
+        conn.close()
+        return jsonify({'error': 'Current password is incorrect'}), 401
+
+    conn.execute(
+        'UPDATE users SET password_hash = ? WHERE id = ?',
+        (generate_password_hash(new_password), session['user_id'])
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Password updated successfully'})
 
 
 # ── Matches API ───────────────────────────────────────────────────────────────
@@ -212,7 +283,8 @@ def get_matches():
 @app.route('/api/matches', methods=['POST'])
 @login_required
 def save_match():
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict): data = {}
     conn = get_db()
     conn.execute(
         'INSERT INTO matches (user_id, config, stats, result) VALUES (?, ?, ?, ?)',
