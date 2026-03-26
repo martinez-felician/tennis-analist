@@ -3,6 +3,12 @@ __pycache__/
 *.pyc
 .env
 
+# Secrets — never commit these
+.secret_key
+
+# Database
+tennis.db
+
 # Node/React
 node_modules/
 build/

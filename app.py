@@ -21,6 +21,30 @@ app = Flask(__name__)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+
+
+@app.after_request
+def set_security_headers(response):
+    # Prevent clickjacking
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # HSTS — 1 year; only effective in production over HTTPS
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # CSP: allow self + Google Fonts + jsdelivr CDN (Chart.js); block plugins and framing
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'; "
+        "object-src 'none'; "
+        "base-uri 'self';"
+    )
+    return response
 
 logging.basicConfig(
     level=logging.INFO,
@@ -113,8 +137,24 @@ def init_db():
             conn.execute(f'ALTER TABLE users ADD COLUMN {col} {definition}')
         except Exception:
             pass  # column already exists
+    # Migrate matches table
+    try:
+        conn.execute('ALTER TABLE matches ADD COLUMN notes TEXT DEFAULT ""')
+    except Exception:
+        pass  # column already exists
     conn.commit()
     conn.close()
+
+
+def _password_error(password):
+    """Return an error string if the password is too weak, else None."""
+    if len(password) < 8:
+        return 'Password must be at least 8 characters'
+    if not any(c.isdigit() for c in password):
+        return 'Password must contain at least one number'
+    if not any(c.isupper() for c in password):
+        return 'Password must contain at least one uppercase letter'
+    return None
 
 
 def login_required(f):
@@ -211,8 +251,9 @@ def register():
         return jsonify({'error': 'All fields are required'}), 400
     if len(username) < 2:
         return jsonify({'error': 'Username must be at least 2 characters'}), 400
-    if len(password) < 8 or not any(c.isdigit() for c in password):
-        return jsonify({'error': 'Password must be at least 8 characters and contain at least one number'}), 400
+    pw_err = _password_error(password)
+    if pw_err:
+        return jsonify({'error': pw_err}), 400
 
     try:
         conn = get_db()
@@ -241,10 +282,13 @@ def login():
     conn.close()
 
     if not user or not check_password_hash(user['password_hash'], password):
-        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        raw_ip = request.headers.get('X-Forwarded-For', request.remote_addr) or ''
+        # Take only the first token and cap length to prevent log injection
+        ip = raw_ip.split(',')[0].strip()[:45]
         logger.warning('Failed login attempt — email: %s, IP: %s', email, ip)
         return jsonify({'error': 'Invalid email or password'}), 401
 
+    session.permanent   = True
     session['user_id']  = user['id']
     session['username'] = user['username']
     return jsonify({'username': user['username']})
@@ -286,8 +330,9 @@ def reset_password():
     password =  data.get('password') or ''
     if not token or not password:
         return jsonify({'error': 'Token and new password are required'}), 400
-    if len(password) < 8 or not any(c.isdigit() for c in password):
-        return jsonify({'error': 'Password must be at least 8 characters and contain a number'}), 400
+    pw_err = _password_error(password)
+    if pw_err:
+        return jsonify({'error': pw_err}), 400
     conn = get_db()
     row = conn.execute(
         'SELECT id, user_id, expires_at, used FROM reset_tokens WHERE token = ?', (token,)
@@ -370,8 +415,9 @@ def change_password():
 
     if not current_password or not new_password:
         return jsonify({'error': 'Both fields are required'}), 400
-    if len(new_password) < 8 or not any(c.isdigit() for c in new_password):
-        return jsonify({'error': 'New password must be at least 8 characters and contain at least one number'}), 400
+    pw_err = _password_error(new_password)
+    if pw_err:
+        return jsonify({'error': pw_err}), 400
 
     conn = get_db()
     user = conn.execute('SELECT password_hash FROM users WHERE id = ?', (session['user_id'],)).fetchone()
@@ -408,7 +454,7 @@ def delete_account():
 def get_matches():
     conn = get_db()
     rows = conn.execute(
-        'SELECT id, config, stats, result, played_at FROM matches '
+        'SELECT id, config, stats, result, notes, played_at FROM matches '
         'WHERE user_id = ? ORDER BY id DESC',
         (session['user_id'],)
     ).fetchall()
@@ -458,19 +504,103 @@ def export_matches_csv():
     )
 
 
+@app.route('/api/matches/export/alltime-stats', methods=['GET'])
+@login_required
+def export_alltime_stats_csv():
+    conn = get_db()
+    user = conn.execute('SELECT is_premium FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    if not user or not user['is_premium']:
+        conn.close()
+        return jsonify({'error': 'Premium required'}), 403
+
+    rows = conn.execute(
+        'SELECT stats FROM matches WHERE user_id = ?', (session['user_id'],)
+    ).fetchall()
+    conn.close()
+
+    ALL_KEYS = [
+        ('ace',          'Ace',                    'Winner'),
+        ('fh-win',       'Forehand Winner',         'Winner'),
+        ('bh-win',       'Backhand Winner',         'Winner'),
+        ('vol',          'Volley Winner',           'Winner'),
+        ('oh',           'Overhead',               'Winner'),
+        ('drop',         'Drop Shot',              'Winner'),
+        ('opp-err',      'Opponent Error',         'Winner'),
+        ('df',           'Double Fault',           'Error'),
+        ('fh-ue',        'Forehand Unforced Error','Error'),
+        ('bh-ue',        'Backhand Unforced Error','Error'),
+        ('fh-fe',        'Forehand Forced Error',  'Error'),
+        ('bh-fe',        'Backhand Forced Error',  'Error'),
+        ('opp-win',      'Opponent Winner',        'Error'),
+        ('miss-return',  'Missed Return',          'Error'),
+        ('vol-err',      'Volley Error',           'Error'),
+        ('oh-err',       'Overhead Error',         'Error'),
+        ('drop-err',     'Drop Shot Error',        'Error'),
+        ('serve1stIn',   '1st Serve In',           'Serve/Return'),
+        ('serve1stOut',  '1st Serve Out',          'Serve/Return'),
+        ('serve2ndIn',   '2nd Serve In',           'Serve/Return'),
+        ('returnWon',    'Return Won',             'Serve/Return'),
+        ('returnLost',   'Return Lost',            'Serve/Return'),
+    ]
+
+    totals = {k: 0 for k, _, __ in ALL_KEYS}
+    matches_count = len(rows)
+    for r in rows:
+        try:
+            s = json.loads(r['stats'])
+            for k, _, __ in ALL_KEYS:
+                totals[k] += s.get(k, 0)
+        except Exception:
+            pass
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['stat_key', 'label', 'category', 'total', 'matches_tracked'])
+    for k, label, category in ALL_KEYS:
+        writer.writerow([k, label, category, totals[k], matches_count])
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=alltime_stats.csv'}
+    )
+
+
+VALID_STAT_KEYS = {
+    'ace', 'fh-win', 'bh-win', 'vol', 'oh', 'drop', 'opp-err',
+    'df', 'fh-ue', 'bh-ue', 'fh-fe', 'bh-fe', 'opp-win', 'miss-return',
+    'vol-err', 'oh-err', 'drop-err',
+    'serve1stIn', 'serve1stOut', 'serve2ndIn', 'returnWon', 'returnLost',
+}
+
+
 @app.route('/api/matches', methods=['POST'])
 @login_required
+@limiter.limit("100 per day")
 def save_match():
     data = request.get_json(silent=True) or {}
     if not isinstance(data, dict): data = {}
+
+    # Validate stats: only known keys, non-negative integers
+    raw_stats = data.get('stats', {})
+    if not isinstance(raw_stats, dict):
+        raw_stats = {}
+    clean_stats = {}
+    for k, v in raw_stats.items():
+        if k in VALID_STAT_KEYS and isinstance(v, (int, float)) and v >= 0:
+            clean_stats[k] = int(v)
+
+    notes = str(data.get('notes', ''))[:500]  # cap at 500 chars
+
     conn = get_db()
     conn.execute(
-        'INSERT INTO matches (user_id, config, stats, result) VALUES (?, ?, ?, ?)',
+        'INSERT INTO matches (user_id, config, stats, result, notes) VALUES (?, ?, ?, ?, ?)',
         (
             session['user_id'],
             json.dumps(data.get('config', {})),
-            json.dumps(data.get('stats',  {})),
+            json.dumps(clean_stats),
             json.dumps(data.get('result', {})),
+            notes,
         )
     )
     conn.commit()
@@ -545,6 +675,10 @@ def billing_portal():
 
 @app.route('/api/billing/webhook', methods=['POST'])
 def stripe_webhook():
+    if not STRIPE_WEBHOOK_SECRET:
+        logger.warning('Stripe webhook called but STRIPE_WEBHOOK_SECRET is not set — rejecting')
+        return '', 400
+
     payload    = request.get_data()
     sig_header = request.headers.get('Stripe-Signature', '')
 

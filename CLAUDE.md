@@ -76,17 +76,21 @@ Point entry goes through steps 0→1→2:
 ### Backend API (app.py)
 
 Auth endpoints (no auth required):
-- `POST /api/auth/register` — create account
-- `POST /api/auth/login` — start session
+- `POST /api/auth/register` — create account (rate-limited: 10/hour)
+- `POST /api/auth/login` — start session (rate-limited: 20/hour)
 - `POST /api/auth/logout` — clear session
 - `GET /api/auth/me` — check session (returns `username`, `first_name`, `last_name`, `is_premium`, `subscription_status`)
+- `POST /api/auth/forgot-password` — send password reset email (rate-limited: 5/hour); always returns 200 to avoid user enumeration
+- `POST /api/auth/reset-password` — consume a reset token and set new password (body: `{token, password}`)
 
 Auth endpoints (`@login_required`):
 - `PUT /api/auth/profile` — update username, first_name, last_name
 - `POST /api/auth/change-password` — change password (body: `{current_password, new_password}`)
+- `DELETE /api/auth/account` — permanently delete account and all matches, then clear session
 
 Match endpoints (`@login_required`):
 - `GET /api/matches` — fetch user's match history (ordered by `id DESC` — newest first)
+- `GET /api/matches/export` — download match history as CSV
 - `POST /api/matches` — save a completed match (body: `{config, stats, result}`)
 
 Billing endpoints (Stripe):
@@ -99,6 +103,7 @@ Billing endpoints (Stripe):
 `tennis.db` (SQLite, created automatically on startup):
 - `users(id, username, email, password_hash, is_premium, stripe_customer_id, subscription_status, first_name, last_name, created_at)` — new columns are added via migration in `init_db()` so old DBs are upgraded automatically
 - `matches(id, user_id, config, stats, result, played_at)` — `config`/`stats`/`result` stored as JSON strings
+- `reset_tokens(id, user_id, token, expires_at, used)` — one-time password reset tokens, expire after 1 hour
 
 ### Stripe / Billing
 
@@ -106,6 +111,14 @@ Billing is optional — the app runs without it, returning 503 on billing endpoi
 - `STRIPE_SECRET_KEY` — Stripe secret key
 - `STRIPE_PRICE_ID` — recurring price ID for the premium subscription
 - `STRIPE_WEBHOOK_SECRET` — for webhook signature verification
+
+### Password Reset / Email
+
+Password reset emails are optional. To enable, set:
+- `SMTP_HOST`, `SMTP_PORT` (default 587), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — SMTP credentials
+- `APP_BASE_URL` — base URL used in reset links (default `http://localhost:5000`)
+
+Without SMTP config, forgot-password requests are accepted but no email is sent (silent no-op logged as a warning).
 
 ### Demo Data
 
@@ -124,7 +137,7 @@ Re-running `seed.py` is idempotent — it updates existing users and replaces th
 
 ### Deployment
 
-Designed for PythonAnywhere WSGI at `fymc.pythonanywhere.com`. `init_db()` is called at module level (not inside `__main__`) so it runs under both local dev and WSGI. Secret key is persisted in `.secret_key` file or via `SECRET_KEY` environment variable.
+Designed for PythonAnywhere WSGI at `fymc.pythonanywhere.com`. `init_db()` is called at module level (not inside `__main__`) so it runs under both local dev and WSGI. Secret key is persisted in `.secret_key` file or via `SECRET_KEY` environment variable. Set `FLASK_DEBUG=true` to enable Flask debug mode locally.
 
 To deploy updates:
 ```bash

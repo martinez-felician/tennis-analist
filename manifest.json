@@ -7,6 +7,29 @@
   "background_color": "#0d1f0f",
   "theme_color": "#c9a84c",
   "orientation": "portrait",
+  "shortcuts": [
+    {
+      "name": "Start Match",
+      "short_name": "Track",
+      "description": "Start tracking a new match",
+      "url": "/",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "View Stats",
+      "short_name": "Stats",
+      "description": "View your match statistics",
+      "url": "/?stats=all",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "My Profile",
+      "short_name": "Profile",
+      "description": "View your match history and account",
+      "url": "/profile",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ],
   "icons": [
     {
       "src": "/icon.svg",

@@ -198,6 +198,7 @@
 
         <div id="stats-all-lock" style="display:none"></div>
 
+        <textarea id="match-notes" class="match-notes-input" maxlength="500" placeholder="Match notes (optional)…"></textarea>
         <button class="save-btn"  id="save-btn" style="display:none" onclick="saveMatch()">Save Match</button>
         <button class="reset-btn" onclick="resetMatch()">Reset Match</button>
 
@@ -227,12 +228,12 @@
         <p class="setup-sub">Configure your match</p>
 
         <div class="setup-field">
-          <label>Opponent Name</label>
+          <label for="setup-opponent">Opponent Name</label>
           <input type="text" id="setup-opponent" class="setup-input" placeholder="e.g. Rafael" maxlength="40" autocomplete="off">
         </div>
 
         <div class="setup-field">
-          <label>Club / Venue</label>
+          <label for="setup-club">Club / Venue</label>
           <input type="text" id="setup-club" class="setup-input" placeholder="e.g. Royal Tennis Club" maxlength="60" autocomplete="off">
         </div>
 

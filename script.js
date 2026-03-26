@@ -87,6 +87,18 @@ const DRILLS = {
         desc: 'Have a partner call out pressure scores (30-40, deuce). Serve only second serves and track your percentage.',
         cue: 'Establish a pre-serve routine. Breathe and reset before every ball.',
       },
+      {
+        name: 'Flat Serve + Second Serve Combo',
+        duration: '15 min',
+        desc: 'Hit a flat first serve and immediately follow with a kick second serve. Focus on a full mental reset between the two.',
+        cue: 'When the first serve misses, exhale and reset. The second serve is its own motion — do not rush it.',
+      },
+      {
+        name: 'Serve Box Target Challenge',
+        duration: '10 min',
+        desc: 'Place a towel in each of the three service zones (T, body, wide). Hit 5 second serves to each zone and count your hits.',
+        cue: 'Placement beats pace every time. Know where you are serving before you toss.',
+      },
     ],
   },
   'fh-ue': {
@@ -109,6 +121,18 @@ const DRILLS = {
         duration: '10 min',
         desc: 'Shadow swing without a ball, focusing on a low-to-high swing path and a full follow-through over your shoulder.',
         cue: 'Check your contact point — it should be in front of your body, not beside you.',
+      },
+      {
+        name: 'High-to-Low Swing Reset',
+        duration: '10 min',
+        desc: 'Slow-motion forehand swings focusing on a low-to-high path. Start at knee height and finish above your shoulder every rep.',
+        cue: 'Gravity pulls the ball down — brush up through it to keep it in. Every net error is a swing path issue.',
+      },
+      {
+        name: 'Inside-Out Consistency Run',
+        duration: '15 min',
+        desc: 'Have a partner feed balls to your forehand corner. Hit inside-out forehands to the opponent backhand side 30 times. No errors — aim wide and deep.',
+        cue: 'A ball in play is worth more than a risky winner. Get comfortable hitting with margin.',
       },
     ],
   },
@@ -133,6 +157,18 @@ const DRILLS = {
         desc: 'Hit backhands against a wall, maintaining a consistent rhythm for 2 minutes at a time.',
         cue: 'Focus on a compact backswing. Consistency comes from simplicity.',
       },
+      {
+        name: 'Backhand High-Ball Drill',
+        duration: '15 min',
+        desc: 'Have a partner feed high, heavy balls to your backhand. Step back early and loop the ball crosscourt with heavy topspin.',
+        cue: 'Step back, absorb, and loop. The high ball is not a threat if you position early and use topspin to neutralize it.',
+      },
+      {
+        name: 'Two-Handed Drive Isolation',
+        duration: '10 min',
+        desc: 'Hit 50 two-handed backhands focusing only on contact point. Contact should be in front of your hip, not beside it.',
+        cue: 'Late contact = errors. Early contact = control. Get in front of the ball every single time.',
+      },
     ],
   },
   'fh-fe': {
@@ -155,6 +191,18 @@ const DRILLS = {
         duration: '10 min',
         desc: 'Practice hitting high defensive lobs when stretched wide. Aim to land the ball deep in the opponent\'s court.',
         cue: 'A good defensive lob resets the point. It is not a losing shot — it is a smart one.',
+      },
+      {
+        name: 'Balance Beam Forehand',
+        duration: '10 min',
+        desc: 'Hit forehands from an intentionally narrow stance to train balance. If you lose balance after the shot, your weight transfer is off.',
+        cue: 'Weight goes into the shot, then stays grounded. Falling back or sideways means you swung before you were set.',
+      },
+      {
+        name: 'Scramble and Reset',
+        duration: '15 min',
+        desc: 'Have a partner force you wide with consecutive feeds. After each difficult ball, sprint back to center and reset before the next one.',
+        cue: 'Recovery speed is as important as shot quality. Get back to base so you control the next ball.',
       },
     ],
   },
@@ -179,6 +227,18 @@ const DRILLS = {
         desc: 'Play out points starting in a defensive backhand position. Focus on staying in the point, not going for winners.',
         cue: 'One more ball than your opponent. Consistency under pressure wins matches.',
       },
+      {
+        name: 'Backhand Neutralizer Rally',
+        duration: '15 min',
+        desc: 'When pushed wide or off balance, practice hitting a high looping backhand deep to the center. The goal is to recover the point, not win it.',
+        cue: 'Use height and depth as your weapons when under pressure. A deep ball to the center gives you time to recover.',
+      },
+      {
+        name: 'Run-Around Forehand as Backup',
+        duration: '10 min',
+        desc: 'Practice running around a backhand to hit an inside-out forehand when time allows. Knowing you have this option removes pressure from the backhand.',
+        cue: 'The run-around forehand is a weapon, not a cheat. Use it when your backhand is not your friend that day.',
+      },
     ],
   },
   'opp-win': {
@@ -202,6 +262,18 @@ const DRILLS = {
         desc: 'Stand 1 meter behind the baseline when the opponent is dominant. Prioritize depth over pace on every shot.',
         cue: 'A ball returned deep resets the point. A risky winner attempt from defense usually loses it.',
       },
+      {
+        name: 'Lob Counter Practice',
+        duration: '15 min',
+        desc: 'When pushed back by opponent winners, practice responding with a high defensive lob. Reset the point rather than attempting a risky pass.',
+        cue: 'A passing shot from a bad position loses more points than it wins. The lob gives you time and shifts the pressure.',
+      },
+      {
+        name: 'Wider Return Positioning',
+        duration: '10 min',
+        desc: 'Stand wider on the baseline to cut off angles. Practice splitting and recovering to center after each shot to reduce the court your opponent can exploit.',
+        cue: 'Covering angles is about positioning before the shot, not speed after it. Set up earlier.',
+      },
     ],
   },
   'ace': {
@@ -218,6 +290,24 @@ const DRILLS = {
         duration: '15 min',
         desc: 'Develop a heavy topspin first serve. It gives pace, a higher net clearance margin, and a nasty bounce.',
         cue: 'Brush from 7 o\'clock to 1 o\'clock across the back of the ball at contact.',
+      },
+      {
+        name: 'Body Serve Drill',
+        duration: '15 min',
+        desc: 'Practice serving directly at the opponent\'s body from both sides. A body serve jams the return and creates easy put-away opportunities.',
+        cue: 'The body serve is underused at every level. Mix it in with T and wide to keep returners guessing.',
+      },
+      {
+        name: 'Flat Serve Extension Session',
+        duration: '15 min',
+        desc: 'Hit 20 flat first serves to the T on the deuce side. Focus on a clean toss, full extension, and pronation through contact.',
+        cue: 'Extension and pronation generate pace — not arm speed alone. Stretch tall and snap through the ball.',
+      },
+      {
+        name: 'Serve Pattern Sequences',
+        duration: '10 min',
+        desc: 'Plan and execute 3-serve sequences: e.g. wide + T + body. Mix your serves so the returner cannot settle into a read.',
+        cue: 'Predictable servers get attacked. A returner who guesses wrong loses 30%+ more points.',
       },
     ],
   },
@@ -236,6 +326,24 @@ const DRILLS = {
         desc: 'Practice hitting a deep forehand and following it to the net to finish with a volley.',
         cue: 'Approach down the line to narrow the opponent\'s angle. Move forward as you hit.',
       },
+      {
+        name: 'Short Ball Attack Drill',
+        duration: '15 min',
+        desc: 'Have a partner feed short balls to your forehand side. Step in and attack with pace to the open court. Finish the point in 2 shots.',
+        cue: 'Short ball = opportunity. Take it early, move forward into the shot, and be aggressive with your target.',
+      },
+      {
+        name: 'Forehand Rally then Attack',
+        duration: '15 min',
+        desc: 'Rally 4 balls crosscourt, then attack with a forehand winner on the 5th. Build consistency before aggression.',
+        cue: 'Set up with patience then attack. Do not go for the winner too early — earn the right shot first.',
+      },
+      {
+        name: 'Forehand Passing Shot',
+        duration: '10 min',
+        desc: 'Practice forehand passing shots from the baseline when the partner rushes the net. Use a low fast ball down the line or a topspin dip crosscourt.',
+        cue: 'The passing shot is won by trajectory — keep it low over the net so the volley cannot be attacked easily.',
+      },
     ],
   },
   'bh-win': {
@@ -252,6 +360,24 @@ const DRILLS = {
         duration: '15 min',
         desc: 'Hit 2-3 deep heavy topspin backhands crosscourt to open the court, then redirect DTL for the winner.',
         cue: 'Build the point first. Do not go DTL from a neutral position — earn it.',
+      },
+      {
+        name: 'Backhand Inside-In Drill',
+        duration: '15 min',
+        desc: 'Set up in the backhand corner and practice hitting inside-in backhand winners at a sharp angle across the court.',
+        cue: 'Inside-in from the backhand side surprises opponents leaning crosscourt. Use it when they are out of position.',
+      },
+      {
+        name: 'Backhand Passing Shot',
+        duration: '10 min',
+        desc: 'Practice backhand passes when a partner rushes the net. Target the open court low and fast, or lob if they crowd.',
+        cue: 'Decide early: down the line if they drift, lob if they crowd the net. Do not wait until the last moment.',
+      },
+      {
+        name: 'Backhand Chip and Charge',
+        duration: '15 min',
+        desc: 'Chip a backhand slice approach down the line and follow to net. Finish with a volley. A classic pattern that surprises opponents.',
+        cue: 'The chip approach works because of the bounce, not pace. Slice it deep and low, then move in.',
       },
     ],
   },
@@ -270,6 +396,24 @@ const DRILLS = {
         desc: 'Serve and immediately charge the net. Hit the first volley deep, then put away the second volley.',
         cue: 'Split step as the opponent hits their return. This gives you balance to move in any direction.',
       },
+      {
+        name: 'Low Volley Pick-Up',
+        duration: '15 min',
+        desc: 'Have a partner feed low dipping balls at your feet. Practice lifting these safely, deep to the center.',
+        cue: 'Bend your knees, not your back. The low volley is all about getting down to the ball and lifting with an open racket face.',
+      },
+      {
+        name: 'Half-Volley Control Drill',
+        duration: '10 min',
+        desc: 'Stand at the service line and practice half-volleys — balls that bounce right at your feet. Use a soft wrist and redirect deep.',
+        cue: 'The half-volley is a reaction shot. Keep the racket face open and absorb the ball — do not force it.',
+      },
+      {
+        name: 'Drop Volley Touch',
+        duration: '10 min',
+        desc: 'Practice absorbing pace and dropping the ball just over the net with backspin. Partner feeds medium-pace balls from the baseline.',
+        cue: 'Soften your grip at impact. The drop volley is the most touch-dependent shot in tennis — you have to feel it.',
+      },
     ],
   },
   'oh': {
@@ -286,6 +430,24 @@ const DRILLS = {
         duration: '15 min',
         desc: 'Practice the jump overhead for deep lobs. Jump off your dominant foot and snap down at contact.',
         cue: 'Do not wait for the ball to drop too low. Meet it at the highest point you can comfortably reach.',
+      },
+      {
+        name: 'Deep Lob — Smash or Bounce Decision',
+        duration: '10 min',
+        desc: 'Train yourself to read when a lob is too deep and let it bounce, then hit a topspin reply instead of forcing a jumping smash.',
+        cue: 'A safe topspin off the bounce beats a shanked jumping overhead. Know your limit and play within it.',
+      },
+      {
+        name: 'Scissors-Jump Overhead',
+        duration: '15 min',
+        desc: 'Practice the scissors jump for balls behind you. Load on the front foot, scissor your legs in the air, and snap down at contact.',
+        cue: 'The scissors jump gives you stability in the air. Load on the front foot before you jump — never fall backwards.',
+      },
+      {
+        name: 'Overhead Placement Drill',
+        duration: '15 min',
+        desc: 'Have a partner lob to both sides while you aim overheads at specific zones — crosscourt and down the line. Placement over power.',
+        cue: 'An overhead you aim is worth three you smash blindly. Pick your spot before the ball reaches you.',
       },
     ],
   },
@@ -304,6 +466,24 @@ const DRILLS = {
         desc: 'Hit a drop shot and immediately charge the net to put away the opponent\'s desperate reply.',
         cue: 'The drop shot is a setup shot — always be ready to finish at the net.',
       },
+      {
+        name: 'Backhand Drop Shot Precision',
+        duration: '15 min',
+        desc: 'Practice the backhand drop shot from rally. Prepare like a slice and deaden the ball just over the net. Aim for it to bounce twice before the service line.',
+        cue: 'The backhand drop is harder to disguise, so set it up off a neutral rally — not when running.',
+      },
+      {
+        name: 'Drop Shot from Mid-Court',
+        duration: '10 min',
+        desc: 'Practice drop shots from inside the baseline. The closer you are, the shorter it needs to land and the less time your opponent has.',
+        cue: 'Position makes the drop shot lethal. Move in first, then surprise.',
+      },
+      {
+        name: 'Drop-Lob Combination',
+        duration: '10 min',
+        desc: 'Hit a drop shot, let the opponent sprint in, then lob their reply over them. A devastating 1-2 combination.',
+        cue: 'Watch for your opponent\'s desperate reply. If it is short or high, the lob over them is almost always on.',
+      },
     ],
   },
   'opp-err': {
@@ -320,6 +500,18 @@ const DRILLS = {
         duration: '15 min',
         desc: 'Rally crosscourt with heavy topspin until a short ball appears, then change direction aggressively.',
         cue: 'Be patient. Let the opponent make the mistake instead of forcing things.',
+      },
+      {
+        name: 'Deep Ball Depth Drill',
+        duration: '15 min',
+        desc: 'Rally with the goal of landing every ball within 1 meter of the baseline. Mark the zone with cones. Depth is your weapon.',
+        cue: 'Deep balls push your opponent back and create shorter replies. Depth beats pace as a forcing tool.',
+      },
+      {
+        name: 'High Topspin Spin-Rate Rally',
+        duration: '10 min',
+        desc: 'Rally focusing on maximum topspin without power. A heavy ball at shoulder height is more uncomfortable than a flat one.',
+        cue: 'Brush steeply up through the ball. It should climb, then drop fast past the baseline.',
       },
     ],
   },
@@ -344,6 +536,18 @@ const DRILLS = {
         desc: 'Practice the split step as the server tosses. Land and explode toward the ball. Good timing is the foundation of a reliable return.',
         cue: 'Split step as the racket makes contact with the ball. Too early or too late and you will be late on every return.',
       },
+      {
+        name: 'Chip-and-Charge Return',
+        duration: '10 min',
+        desc: 'Practice chipping the return short and following to the net. Works especially well against a slow second serve.',
+        cue: 'The chip return is controlled aggression. Aim it short and low, then use your net position to win the point.',
+      },
+      {
+        name: 'Aggressive Return Attack',
+        duration: '15 min',
+        desc: 'Take the second serve early and drive it deep crosscourt or down the line. Step inside the baseline to take it on the rise.',
+        cue: 'Taking the ball early removes the server\'s recovery time. Stand closer in and commit to an early contact point.',
+      },
     ],
   },
   'vol-err': {
@@ -366,6 +570,18 @@ const DRILLS = {
         duration: '10 min',
         desc: 'Play points starting at the net. Focus on keeping the first volley deep and the second volley away. Don\'t go for winners too early.',
         cue: 'The first volley is about control and depth, not the winner. Set it up with the second.',
+      },
+      {
+        name: 'Touch Volley Minitennis',
+        duration: '10 min',
+        desc: 'Both players at the net, play out points with soft volleys only. No power — all placement, angles, and touch.',
+        cue: 'Minitennis at the net sharpens feel instantly. No backswing, no power — just wrist firmness and redirection.',
+      },
+      {
+        name: 'First Volley Depth Target',
+        duration: '15 min',
+        desc: 'After serving and rushing the net, hit every first volley as deep and central as possible. Use a cone 1 meter inside the baseline as your target.',
+        cue: 'The first volley is about control and positioning for the second. Depth to the center is always the safest play.',
       },
     ],
   },
@@ -390,6 +606,18 @@ const DRILLS = {
         desc: 'When the lob is too deep to smash, practice turning and hitting a topspin ball off the bounce rather than forcing a difficult overhead.',
         cue: 'Know when to let it bounce. A safe topspin reply is better than a shanked overhead on the retreat.',
       },
+      {
+        name: 'Sun Drill',
+        duration: '10 min',
+        desc: 'Practice overhead tracking when looking into a bright sky. Use a hat in training to simulate tough conditions.',
+        cue: 'If you cannot track the ball against the sky, let it bounce. A safe recovery ball beats a shanked overhead every time.',
+      },
+      {
+        name: 'Overhead Footwork Ladder',
+        duration: '15 min',
+        desc: 'Use an agility ladder to work on the crossover step pattern for overhead setup. Move back, split, and recover forward after each rep.',
+        cue: 'The footwork is the overhead. If you are not behind the ball, even a perfect swing will produce an error.',
+      },
     ],
   },
   'drop-err': {
@@ -413,27 +641,89 @@ const DRILLS = {
         desc: 'After every drop shot, immediately move to the net to put away the reply. A drop shot that you don\'t follow in gives your opponent time to recover.',
         cue: 'Hit and move. The drop shot is a setup shot — you must finish the point at the net.',
       },
+      {
+        name: 'Approach then Drop',
+        duration: '15 min',
+        desc: 'Approach the net with a deep groundstroke, wait for the reply, then hit a drop volley to finish. A two-shot combination.',
+        cue: 'The drop volley after an approach surprises opponents expecting a strong finish. Give them the opposite.',
+      },
+      {
+        name: 'Net Tape Challenge',
+        duration: '10 min',
+        desc: 'Hang a string 10 cm above the net. Practice drop shots that clear the net with minimum margin and maximum backspin.',
+        cue: 'The tighter your clearance, the shorter the bounce. But never sacrifice clearance for spin — hitting the net loses the point.',
+      },
     ],
   },
 };
+
+// --- Drill rotation tracking (localStorage) ---
+// Each drill is tracked as "shotKey:drillIndex" → count of times shown.
+// A drill is skipped once it has been shown 2 times; when all drills for a key
+// are maxed out, that key's counts reset so the cycle restarts.
+
+function _getDrillCounts() {
+  try { return JSON.parse(localStorage.getItem('ta-drill-counts') || '{}'); }
+  catch (e) { return {}; }
+}
+
+function _saveDrillCounts(counts) {
+  try { localStorage.setItem('ta-drill-counts', JSON.stringify(counts)); }
+  catch (e) {}
+}
+
+function _availableDrills(shotKey) {
+  const all    = (DRILLS[shotKey] || {}).items || [];
+  const counts = _getDrillCounts();
+  let available = all.filter((_, i) => (counts[`${shotKey}:${i}`] || 0) < 2);
+  if (available.length === 0) {
+    // All maxed — reset this key and return everything
+    const updated = { ...counts };
+    all.forEach((_, i) => { delete updated[`${shotKey}:${i}`]; });
+    _saveDrillCounts(updated);
+    available = all;
+  }
+  return available;
+}
+
+function _commitDrills(shotKey, drills) {
+  const all    = (DRILLS[shotKey] || {}).items || [];
+  const counts = _getDrillCounts();
+  drills.forEach(drill => {
+    const idx = all.findIndex(d => d.name === drill.name);
+    if (idx >= 0) {
+      const k = `${shotKey}:${idx}`;
+      counts[k] = (counts[k] || 0) + 1;
+    }
+  });
+  _saveDrillCounts(counts);
+}
 
 function generatePracticePlan(weaknesses, strengths) {
   const sessions = [];
   let day = 1;
 
-  weaknesses.slice(0, 3).forEach(w => {
+  // Top 1 weakness — show all available drills (rotation-filtered)
+  if (weaknesses.length > 0) {
+    const w    = weaknesses[0];
     const data = DRILLS[w.key];
-    if (!data) return;
-    const mins = data.items.reduce((s, d) => s + parseInt(d.duration), 0);
-    sessions.push({ day: day++, type: 'weakness', title: data.sessionTitle, sub: `Fix: ${w.label} — ${w.count}x this match`, drills: data.items, mins });
-  });
+    if (data) {
+      const drills = _availableDrills(w.key);
+      _commitDrills(w.key, drills);
+      const mins = drills.reduce((s, d) => s + parseInt(d.duration), 0);
+      sessions.push({ day: day++, type: 'weakness', title: data.sessionTitle, sub: `Fix: ${w.label} — ${w.count}x this match`, drills, mins });
+    }
+  }
 
+  // Top 1 strength — show all available drills (rotation-filtered)
   if (strengths.length > 0) {
-    const s = strengths[0];
+    const s    = strengths[0];
     const data = DRILLS[s.key];
     if (data) {
-      const mins = data.items.reduce((sum, d) => sum + parseInt(d.duration), 0);
-      sessions.push({ day: day++, type: 'strength', title: data.sessionTitle, sub: `Develop: ${s.label} — ${s.count}x this match`, drills: data.items, mins });
+      const drills = _availableDrills(s.key);
+      _commitDrills(s.key, drills);
+      const mins = drills.reduce((sum, d) => sum + parseInt(d.duration), 0);
+      sessions.push({ day: day++, type: 'strength', title: data.sessionTitle, sub: `Develop: ${s.label} — ${s.count}x this match`, drills, mins });
     }
   }
 
@@ -461,16 +751,21 @@ function analyzePerformance(statsData) {
     .map(m => ({ ...m, count: s[m.key] || 0 }))
     .filter(m => m.count > 0)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 2);
+    .slice(0, 1);
 
   const weaknesses = LOSS_METHODS
     .map(m => ({ ...m, count: s[m.key] || 0 }))
     .filter(m => m.count > 0)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
+    .slice(0, 1);
 
   return { strengths, weaknesses };
 }
+
+// Cache so switching tabs doesn't re-generate the plan and re-burn drill counts
+let _insightCache = null;  // { statsHash, html }
+
+function _statsHash(s) { return JSON.stringify(s); }
 
 async function renderInsights() {
   const emptyEl   = document.getElementById('insights-empty');
@@ -539,6 +834,13 @@ async function renderInsights() {
     return;
   }
 
+  // Only generate a new plan (and commit drill counts) when the underlying stats change
+  const currentHash = _statsHash(insightStats);
+  if (_insightCache && _insightCache.statsHash === currentHash) {
+    contentEl.innerHTML = summaryHTML + _insightCache.planHTML;
+    return;
+  }
+
   const plan = generatePracticePlan(result.weaknesses, result.strengths);
 
   const planHTML = plan.map(s => `
@@ -566,11 +868,16 @@ async function renderInsights() {
     </div>
   `).join('');
 
+  _insightCache = { statsHash: currentHash, planHTML };
   contentEl.innerHTML = summaryHTML + planHTML;
 }
 
 // --- Navigation ---
-function switchView(view) {
+function switchView(view, force) {
+  // Warn if user navigates away from tracker mid-match (not for programmatic calls)
+  if (!force && matchStarted && !matchOver && view !== 'tracker') {
+    if (!confirm('You have a match in progress. Stats and Insights are still visible — your match will continue when you return to Tracker.')) return;
+  }
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
@@ -644,15 +951,19 @@ function captureState() {
 
 function persistState() {
   if (!matchStarted || matchOver) return;
-  localStorage.setItem('ta-match-state', JSON.stringify({
-    matchConfig,
-    player1Points, player2Points,
-    player1Games,  player2Games,
-    player1Sets,   player2Sets,
-    inTiebreak, tiebreakPointCount, isServing,
-    servingBeforeTiebreak, matchOver, matchStarted,
-    stats,
-  }));
+  try {
+    localStorage.setItem('ta-match-state', JSON.stringify({
+      matchConfig,
+      player1Points, player2Points,
+      player1Games,  player2Games,
+      player1Sets,   player2Sets,
+      inTiebreak, tiebreakPointCount, isServing,
+      servingBeforeTiebreak, matchOver, matchStarted,
+      stats,
+    }));
+  } catch (e) {
+    // Storage quota exceeded or private browsing — silently ignore
+  }
 }
 
 function restoreState() {
@@ -823,7 +1134,7 @@ function checkMatchWinner(playerWon) {
     const name = playerWon ? matchConfig.playerName : 'Opponent';
     showToast(name + ' won the match!');
     showSaveButton();
-    setTimeout(() => switchView('stats'), 2500);
+    setTimeout(() => switchView('stats', true), 2500);
   }
 }
 
@@ -1059,8 +1370,10 @@ function showInitialStep() {
 // --- Reset ---
 function resetMatch() {
   if (!confirm('Reset the match? All data will be lost.')) return;
-  const saveBtn = document.getElementById('save-btn');
-  if (saveBtn) saveBtn.style.display = 'none';
+  const saveBtn  = document.getElementById('save-btn');
+  const notesEl  = document.getElementById('match-notes');
+  if (saveBtn)  saveBtn.style.display  = 'none';
+  if (notesEl)  { notesEl.style.display = 'none'; notesEl.value = ''; }
   player1Points = 0; player2Points = 0;
   player1Games = 0;  player2Games = 0;
   player1Sets = 0;   player2Sets = 0;
@@ -1099,7 +1412,7 @@ function resetMatch() {
   if (oppInput)  oppInput.value  = '';
   if (clubInput) clubInput.value = '';
   document.getElementById('view-setup').style.display = 'flex';
-  switchView('tracker');
+  switchView('tracker', true);
 }
 
 // --- Auth & Save ---
@@ -1180,16 +1493,20 @@ async function logoutUser() {
 }
 
 function showSaveButton() {
-  const btn = document.getElementById('save-btn');
-  if (btn) { btn.style.display = 'block'; btn.disabled = false; btn.textContent = 'Save Match'; }
+  const btn   = document.getElementById('save-btn');
+  const notes = document.getElementById('match-notes');
+  if (btn)   { btn.style.display   = 'block'; btn.disabled = false; btn.textContent = 'Save Match'; }
+  if (notes) { notes.style.display = 'block'; notes.value = ''; }
 }
 
 async function saveMatch() {
   const btn = document.getElementById('save-btn');
+  const notesEl = document.getElementById('match-notes');
   const matchPayload = {
     config: matchConfig,
     stats,
     result: { player1Sets, player2Sets, won: player1Sets > player2Sets },
+    notes:  notesEl ? notesEl.value.trim() : '',
   };
 
   if (!isAuthenticated) {

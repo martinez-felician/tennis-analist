@@ -67,7 +67,7 @@
                 </div>
                 <div class="auth-field">
                     <label>Password</label>
-                    <input type="password" id="reg-password" placeholder="At least 8 characters, one number" required>
+                    <input type="password" id="reg-password" placeholder="At least 8 characters, one number, one uppercase" required>
                 </div>
                 <p class="auth-error"   id="reg-error"></p>
                 <p class="auth-success" id="reg-success"></p>
@@ -96,7 +96,7 @@
                 <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:1rem">Choose a new password.</p>
                 <div class="auth-field">
                     <label>New Password</label>
-                    <input type="password" id="reset-pw" placeholder="At least 8 characters, one number">
+                    <input type="password" id="reset-pw" placeholder="At least 8 characters, one number, one uppercase">
                 </div>
                 <div class="auth-field">
                     <label>Confirm Password</label>
@@ -152,8 +152,8 @@
             const pw   = document.getElementById('reset-pw').value;
             const conf = document.getElementById('reset-pw-conf').value;
             if (pw !== conf) { errEl.textContent = 'Passwords do not match.'; return; }
-            if (pw.length < 8 || !/\d/.test(pw)) {
-                errEl.textContent = 'Password must be at least 8 characters and contain a number.'; return;
+            if (pw.length < 8 || !/\d/.test(pw) || !/[A-Z]/.test(pw)) {
+                errEl.textContent = 'Password must be at least 8 characters, contain a number, and contain an uppercase letter.'; return;
             }
             const token = new URLSearchParams(location.search).get('reset');
             const res   = await fetch('/api/auth/reset-password', {
@@ -199,8 +199,8 @@
             sucEl.textContent = '';
             const email    = document.getElementById('reg-email').value;
             const password = document.getElementById('reg-password').value;
-            if (password.length < 8 || !/\d/.test(password)) {
-                errEl.textContent = 'Password must be at least 8 characters and contain at least one number.';
+            if (password.length < 8 || !/\d/.test(password) || !/[A-Z]/.test(password)) {
+                errEl.textContent = 'Password must be at least 8 characters, contain a number, and contain an uppercase letter.';
                 return;
             }
             const res  = await fetch('/api/auth/register', {
