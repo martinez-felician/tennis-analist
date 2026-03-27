@@ -523,7 +523,7 @@
             const res     = await fetch('/api/matches');
             const matches = await res.json();
             window._profileMatches = matches;
-            renderWinRateChart(matches);
+            try { renderWinRateChart(matches); } catch (e) { /* Chart.js not available */ }
             const listEl  = document.getElementById('match-list');
 
             if (!matches.length) {
