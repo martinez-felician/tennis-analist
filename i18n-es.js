@@ -398,6 +398,8 @@ window.TA_ES = {
 "Configure your match": "Configura tu partido",
 "Opponent Name": "Nombre del rival",
 "e.g. Rafael": "p. ej. Rafael",
+"Your Name": "Tu nombre",
+"e.g. Carlos": "p. ej. Carlos",
 "Starting As": "Empiezo como",
 "Serving": "Sacando",
 "Returning": "Restando",

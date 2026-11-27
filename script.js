@@ -1428,6 +1428,7 @@ function saveSetupPrefs() {
     const prefs = {};
     SETUP_GROUPS.forEach(g => { prefs[g] = _setupVal(g); });
     prefs.club = document.getElementById('setup-club')?.value.trim() || '';
+    prefs.player = document.getElementById('setup-player')?.value.trim() || '';
     localStorage.setItem('ta-setup-prefs', JSON.stringify(prefs));
   } catch (e) { /* storage unavailable: ignore */ }
 }
@@ -1443,6 +1444,8 @@ function restoreSetupPrefs() {
       });
       const club = document.getElementById('setup-club');
       if (club && prefs.club) club.value = prefs.club;
+      const pl = document.getElementById('setup-player');
+      if (pl && prefs.player) pl.value = prefs.player;
     }
   } catch (e) { /* ignore corrupt prefs */ }
   updateSetupSummary();
@@ -1451,7 +1454,8 @@ function restoreSetupPrefs() {
 function startMatch() {
   const getVal = group => document.querySelector(`.setup-opts[data-group="${group}"] .setup-opt.active`)?.dataset.value;
 
-  matchConfig.playerName      = loggedInUsername;
+  const typedName = document.getElementById('setup-player')?.value.trim();
+  matchConfig.playerName      = isAuthenticated ? loggedInUsername : (typedName || 'Player');
   matchConfig.opponentName    = (document.getElementById('setup-opponent')?.value.trim()) || 'Opponent';
   matchConfig.clubName        = (document.getElementById('setup-club')?.value.trim())     || '';
   matchConfig.phase           = getVal('phase') || 'friendly';
@@ -1570,6 +1574,8 @@ async function initApp() {
   isAuthenticated = true;
   const user = await res.json();
   loggedInUsername = user.username || 'Player';
+  const playerField = document.getElementById('setup-player-field');
+  if (playerField) playerField.style.display = 'none';
   isPremium = !!user.is_premium;
   const el = document.getElementById('nav-username');
   if (el) el.textContent = user.username;

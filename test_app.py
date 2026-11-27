@@ -763,3 +763,9 @@ class TestI18nStatic(BaseTestCase):
             r = self.client.get(path)
             self.assertEqual(r.status_code, 200)
             self.assertIn('javascript', r.content_type)
+
+
+class TestPlayerNameField(BaseTestCase):
+    def test_setup_has_player_name_field(self):
+        html = self.client.get('/app').get_data(as_text=True)
+        self.assertIn('id="setup-player"', html)
