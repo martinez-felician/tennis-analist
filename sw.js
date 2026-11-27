@@ -1,4 +1,4 @@
-const CACHE = 'tennis-analyst-v9';
+const CACHE = 'tennis-analyst-v10';
 const STATIC = ['/style.css', '/script.js', '/fonts.css', '/vendor/chart.umd.min.js', '/fonts/dm-sans-latin-400-normal.woff2', '/fonts/dm-sans-latin-500-normal.woff2', '/fonts/dm-sans-latin-600-normal.woff2', '/fonts/dm-sans-latin-700-normal.woff2', '/fonts/dm-serif-display-latin-400-normal.woff2', '/i18n.js', '/i18n-es.js', '/manifest.json', '/icon.svg', '/logo.svg', '/icon-192.png', '/icon-512.png', '/icon-180.png'];
 
 // Cache static assets on install

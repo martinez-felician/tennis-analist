@@ -1517,7 +1517,7 @@ function showInitialStep() {
 
 // --- Reset ---
 function resetMatch() {
-  if (!confirm(t('Reset the match? All data will be lost.'))) return;
+  if (!confirm(t('Discard this match and start a new one? All data will be lost.'))) return;
   const saveBtn  = document.getElementById('save-btn');
   const notesEl  = document.getElementById('match-notes');
   if (saveBtn)  saveBtn.style.display  = 'none';

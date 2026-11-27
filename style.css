@@ -1187,7 +1187,7 @@ header     { z-index: 10; }
 }
 
 /* ── UNDO BUTTON ─────────────────────────────── */
-.undo-row { display: flex; justify-content: flex-end; padding: 4px 0 8px; }
+.undo-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0 8px; }
 .undo-btn {
     background: transparent;
     border: 1px solid rgba(182,74,28,0.18);

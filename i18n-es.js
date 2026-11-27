@@ -559,6 +559,8 @@ window.TA_ES = {
 "No saved matches yet": "Aún no hay partidos guardados",
 "Could not load matches": "No se pudieron cargar los partidos",
 "Reset the match? All data will be lost.": "¿Reiniciar el partido? Se perderán todos los datos.",
+"Discard this match and start a new one? All data will be lost.": "¿Descartar este partido y empezar uno nuevo? Se perderán todos los datos.",
+"New match": "Nuevo partido",
 "Your match was saved to your profile!": "¡Tu partido se guardó en tu perfil!",
 "Could not recover previous match — sorry.": "No se pudo recuperar el partido anterior. Lo sentimos.",
 "Log In / Sign Up": "Iniciar sesión / Registrarse",
