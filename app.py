@@ -7,7 +7,7 @@ import secrets
 import smtplib
 import sqlite3
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from functools import wraps
 
@@ -32,12 +32,12 @@ def set_security_headers(response):
     # HSTS — 1 year; only effective in production over HTTPS
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    # CSP: allow self + Google Fonts + jsdelivr CDN (Chart.js); block plugins and framing
+    # CSP: only our own origin (fonts and Chart.js are self-hosted); block plugins and framing
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src 'self' https://fonts.gstatic.com; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "font-src 'self'; "
         "img-src 'self' data:; "
         "connect-src 'self'; "
         "frame-ancestors 'none'; "
@@ -133,6 +133,7 @@ def init_db():
         ('subscription_status', 'TEXT'),
         ('first_name',          'TEXT DEFAULT ""'),
         ('last_name',           'TEXT DEFAULT ""'),
+        ('terms_accepted_at',   'TEXT'),
     ]:
         try:
             conn.execute(f'ALTER TABLE users ADD COLUMN {col} {definition}')
@@ -224,6 +225,28 @@ def serve_css():
 def serve_js():
     return send_from_directory(BASE_DIR, 'script.js')
 
+@app.route('/terms')
+def terms_page():
+    return send_from_directory(BASE_DIR, 'terms.html')
+
+@app.route('/privacy')
+def privacy_page():
+    return send_from_directory(BASE_DIR, 'privacy.html')
+
+@app.route('/fonts.css')
+def serve_fonts_css():
+    return send_from_directory(BASE_DIR, 'fonts.css')
+
+@app.route('/fonts/<path:filename>')
+def serve_font(filename):
+    if not filename.endswith('.woff2'):
+        abort(404)
+    return send_from_directory(os.path.join(BASE_DIR, 'fonts'), filename)
+
+@app.route('/vendor/chart.umd.min.js')
+def serve_chartjs():
+    return send_from_directory(os.path.join(BASE_DIR, 'vendor'), 'chart.umd.min.js')
+
 @app.route('/i18n.js')
 def serve_i18n():
     return send_from_directory(BASE_DIR, 'i18n.js')
@@ -273,12 +296,14 @@ def register():
     pw_err = _password_error(password)
     if pw_err:
         return jsonify({'error': pw_err}), 400
+    if data.get('accept_terms') is not True:
+        return jsonify({'error': 'You must accept the Terms and confirm you are 13 or older'}), 400
 
     try:
         conn = get_db()
         conn.execute(
-            'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-            (username, email, generate_password_hash(password))
+            'INSERT INTO users (username, email, password_hash, terms_accepted_at) VALUES (?, ?, ?, ?)',
+            (username, email, generate_password_hash(password), datetime.now(timezone.utc).isoformat())
         )
         conn.commit()
         conn.close()

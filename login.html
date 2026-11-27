@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tennis Analyst — Login</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/fonts.css">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#14513a">
@@ -72,6 +70,10 @@
                     <label>Password</label>
                     <input type="password" id="reg-password" placeholder="At least 8 characters, one number, one uppercase" required>
                 </div>
+                <label class="auth-terms">
+                    <input type="checkbox" id="reg-terms">
+                    <span>I am 13 or older and I accept the <a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy</a></span>
+                </label>
                 <p class="auth-error"   id="reg-error"></p>
                 <p class="auth-success" id="reg-success"></p>
                 <button type="submit" class="start-btn">Create Account</button>
@@ -206,12 +208,16 @@
                 errEl.textContent = 'Password must be at least 8 characters, contain a number, and contain an uppercase letter.';
                 return;
             }
+            if (!document.getElementById('reg-terms').checked) {
+                errEl.textContent = 'Please accept the Terms and confirm you are 13 or older.';
+                return;
+            }
             const res  = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username: document.getElementById('reg-username').value,
-                    email, password,
+                    email, password, accept_terms: true,
                 }),
             });
             const data = await res.json();

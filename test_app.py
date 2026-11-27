@@ -41,6 +41,7 @@ class BaseTestCase(unittest.TestCase):
     def _register(self, username='testuser', email='test@example.com', password='Pass1234'):
         return self.client.post('/api/auth/register', json={
             'username': username, 'email': email, 'password': password,
+            'accept_terms': True,
         })
 
     def _login(self, email='test@example.com', password='Pass1234'):
@@ -769,3 +770,47 @@ class TestPlayerNameField(BaseTestCase):
     def test_setup_has_player_name_field(self):
         html = self.client.get('/app').get_data(as_text=True)
         self.assertIn('id="setup-player"', html)
+
+
+class TestLegalAndPrivacy(BaseTestCase):
+    def test_register_requires_terms(self):
+        res = self.client.post('/api/auth/register', json={
+            'username': 'noterms', 'email': 'nt@example.com', 'password': 'Pass1234',
+        })
+        self.assertEqual(res.status_code, 400)
+        res = self.client.post('/api/auth/register', json={
+            'username': 'noterms', 'email': 'nt@example.com', 'password': 'Pass1234',
+            'accept_terms': 'yes',
+        })
+        self.assertEqual(res.status_code, 400)
+
+    def test_register_stores_acceptance_time(self):
+        self._register()
+        import sqlite3
+        conn = sqlite3.connect(self._db_path)
+        row = conn.execute('SELECT terms_accepted_at FROM users').fetchone()
+        conn.close()
+        self.assertTrue(row[0])
+
+    def test_legal_pages_served(self):
+        for path in ('/terms', '/privacy'):
+            r = self.client.get(path)
+            self.assertEqual(r.status_code, 200)
+            self.assertIn('Last updated', r.get_data(as_text=True))
+
+    def test_fonts_and_chart_self_hosted(self):
+        self.assertEqual(self.client.get('/fonts.css').status_code, 200)
+        self.assertEqual(self.client.get('/fonts/dm-sans-latin-400-normal.woff2').status_code, 200)
+        self.assertEqual(self.client.get('/fonts/evil.txt').status_code, 404)
+        self.assertEqual(self.client.get('/vendor/chart.umd.min.js').status_code, 200)
+
+    def test_no_third_party_resources_in_pages(self):
+        for path in ('/', '/app', '/login', '/home', '/profile', '/terms', '/privacy'):
+            html = self.client.get(path).get_data(as_text=True)
+            for host in ('googleapis.com', 'gstatic.com', 'jsdelivr.net'):
+                self.assertNotIn(host, html, f'{host} found in {path}')
+
+    def test_csp_blocks_third_parties(self):
+        csp = self.client.get('/').headers['Content-Security-Policy']
+        for host in ('googleapis', 'gstatic', 'jsdelivr'):
+            self.assertNotIn(host, csp)

@@ -39,6 +39,7 @@ class BaseTestCase(unittest.TestCase):
     def _register(self, username='alice', email='alice@example.com', password='Pass1234'):
         return self.client.post('/api/auth/register', json={
             'username': username, 'email': email, 'password': password,
+            'accept_terms': True,
         })
 
     def _login(self, email='alice@example.com', password='Pass1234'):
@@ -80,7 +81,7 @@ class TestPrivilegeEscalation(BaseTestCase):
         """Passing a foreign user_id in the body must be ignored — match saved to session user."""
         # Register a second user to steal their id
         self.client.post('/api/auth/register', json={
-            'username': 'bob', 'email': 'bob@example.com', 'password': 'Pass1234',
+            'username': 'bob', 'email': 'bob@example.com', 'accept_terms': True, 'password': 'Pass1234',
         })
         conn = flask_app.get_db()
         bob_id = conn.execute("SELECT id FROM users WHERE email='bob@example.com'").fetchone()['id']
@@ -113,7 +114,7 @@ class TestCrossUserIsolation(BaseTestCase):
 
         # Bob registers and sees zero matches
         self.client.post('/api/auth/register', json={
-            'username': 'bob', 'email': 'bob@example.com', 'password': 'Pass1234',
+            'username': 'bob', 'email': 'bob@example.com', 'accept_terms': True, 'password': 'Pass1234',
         })
         self._login(email='bob@example.com', password='Pass1234')
         self.assertEqual(self.client.get('/api/matches').get_json(), [])
@@ -124,10 +125,10 @@ class TestCrossUserIsolation(BaseTestCase):
         client_b = flask_app.app.test_client()
 
         client_a.post('/api/auth/register', json={
-            'username': 'alice', 'email': 'alice@example.com', 'password': 'Pass1234',
+            'username': 'alice', 'email': 'alice@example.com', 'accept_terms': True, 'password': 'Pass1234',
         })
         client_b.post('/api/auth/register', json={
-            'username': 'bob', 'email': 'bob@example.com', 'password': 'Pass1234',
+            'username': 'bob', 'email': 'bob@example.com', 'accept_terms': True, 'password': 'Pass1234',
         })
         client_a.post('/api/auth/login', json={'email': 'alice@example.com', 'password': 'Pass1234'})
         client_b.post('/api/auth/login', json={'email': 'bob@example.com', 'password': 'Pass1234'})
@@ -147,7 +148,7 @@ class TestCrossUserIsolation(BaseTestCase):
 
         for c, u, e in [(client_a, 'alice', 'alice@example.com'),
                         (client_b, 'bob',   'bob@example.com')]:
-            c.post('/api/auth/register', json={'username': u, 'email': e, 'password': 'Pass1234'})
+            c.post('/api/auth/register', json={'username': u, 'email': e, 'accept_terms': True, 'password': 'Pass1234'})
             c.post('/api/auth/login',    json={'email': e, 'password': 'Pass1234'})
 
         client_a.post('/api/auth/logout')
@@ -437,7 +438,7 @@ class TestMatchDataIntegrity(BaseTestCase):
 
         # Register Bob and try to access Alice's match by id
         self.client.post('/api/auth/register', json={
-            'username': 'bob', 'email': 'bob@example.com', 'password': 'Pass1234',
+            'username': 'bob', 'email': 'bob@example.com', 'accept_terms': True, 'password': 'Pass1234',
         })
         self._login(email='bob@example.com', password='Pass1234')
 
