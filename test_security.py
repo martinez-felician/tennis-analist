@@ -21,6 +21,9 @@ class BaseTestCase(unittest.TestCase):
         flask_app.init_db()
         flask_app.app.config['TESTING'] = True
         flask_app.app.config['SECRET_KEY'] = 'test-secret'
+        flask_app.app.config['SESSION_COOKIE_SECURE'] = False
+        flask_app.app.config['RATELIMIT_ENABLED'] = False
+        flask_app.limiter.reset()
         self.client = flask_app.app.test_client()
 
     def tearDown(self):
@@ -33,17 +36,17 @@ class BaseTestCase(unittest.TestCase):
         except OSError:
             pass
 
-    def _register(self, username='alice', email='alice@example.com', password='pass123'):
+    def _register(self, username='alice', email='alice@example.com', password='Pass1234'):
         return self.client.post('/api/auth/register', json={
             'username': username, 'email': email, 'password': password,
         })
 
-    def _login(self, email='alice@example.com', password='pass123'):
+    def _login(self, email='alice@example.com', password='Pass1234'):
         return self.client.post('/api/auth/login', json={
             'email': email, 'password': password,
         })
 
-    def _register_and_login(self, username='alice', email='alice@example.com', password='pass123'):
+    def _register_and_login(self, username='alice', email='alice@example.com', password='Pass1234'):
         self._register(username=username, email=email, password=password)
         self._login(email=email, password=password)
 
@@ -77,7 +80,7 @@ class TestPrivilegeEscalation(BaseTestCase):
         """Passing a foreign user_id in the body must be ignored — match saved to session user."""
         # Register a second user to steal their id
         self.client.post('/api/auth/register', json={
-            'username': 'bob', 'email': 'bob@example.com', 'password': 'pass123',
+            'username': 'bob', 'email': 'bob@example.com', 'password': 'Pass1234',
         })
         conn = flask_app.get_db()
         bob_id = conn.execute("SELECT id FROM users WHERE email='bob@example.com'").fetchone()['id']
@@ -92,7 +95,7 @@ class TestPrivilegeEscalation(BaseTestCase):
         alice_matches = self.client.get('/api/matches').get_json()
         self.assertEqual(len(alice_matches), 1)
 
-        self._login(email='bob@example.com', password='pass123')
+        self._login(email='bob@example.com', password='Pass1234')
         bob_matches = self.client.get('/api/matches').get_json()
         self.assertEqual(len(bob_matches), 0)
 
@@ -110,9 +113,9 @@ class TestCrossUserIsolation(BaseTestCase):
 
         # Bob registers and sees zero matches
         self.client.post('/api/auth/register', json={
-            'username': 'bob', 'email': 'bob@example.com', 'password': 'pass123',
+            'username': 'bob', 'email': 'bob@example.com', 'password': 'Pass1234',
         })
-        self._login(email='bob@example.com', password='pass123')
+        self._login(email='bob@example.com', password='Pass1234')
         self.assertEqual(self.client.get('/api/matches').get_json(), [])
 
     def test_concurrent_sessions_independent(self):
@@ -121,13 +124,13 @@ class TestCrossUserIsolation(BaseTestCase):
         client_b = flask_app.app.test_client()
 
         client_a.post('/api/auth/register', json={
-            'username': 'alice', 'email': 'alice@example.com', 'password': 'pass123',
+            'username': 'alice', 'email': 'alice@example.com', 'password': 'Pass1234',
         })
         client_b.post('/api/auth/register', json={
-            'username': 'bob', 'email': 'bob@example.com', 'password': 'pass123',
+            'username': 'bob', 'email': 'bob@example.com', 'password': 'Pass1234',
         })
-        client_a.post('/api/auth/login', json={'email': 'alice@example.com', 'password': 'pass123'})
-        client_b.post('/api/auth/login', json={'email': 'bob@example.com', 'password': 'pass123'})
+        client_a.post('/api/auth/login', json={'email': 'alice@example.com', 'password': 'Pass1234'})
+        client_b.post('/api/auth/login', json={'email': 'bob@example.com', 'password': 'Pass1234'})
 
         client_a.post('/api/matches', json={'config': {'owner': 'alice'}, 'stats': {}, 'result': {}})
 
@@ -144,8 +147,8 @@ class TestCrossUserIsolation(BaseTestCase):
 
         for c, u, e in [(client_a, 'alice', 'alice@example.com'),
                         (client_b, 'bob',   'bob@example.com')]:
-            c.post('/api/auth/register', json={'username': u, 'email': e, 'password': 'pass123'})
-            c.post('/api/auth/login',    json={'email': e, 'password': 'pass123'})
+            c.post('/api/auth/register', json={'username': u, 'email': e, 'password': 'Pass1234'})
+            c.post('/api/auth/login',    json={'email': e, 'password': 'Pass1234'})
 
         client_a.post('/api/auth/logout')
 
@@ -172,7 +175,7 @@ class TestSQLInjection(BaseTestCase):
         self._register()
         for payload in self.SQL_PAYLOADS:
             res = self.client.post('/api/auth/login', json={
-                'email': payload, 'password': 'pass123',
+                'email': payload, 'password': 'Pass1234',
             })
             self.assertEqual(res.status_code, 401,
                              f'Injection payload accepted as email: {payload!r}')
@@ -189,7 +192,7 @@ class TestSQLInjection(BaseTestCase):
     def test_sql_injection_in_username_register(self):
         for payload in self.SQL_PAYLOADS:
             res = self.client.post('/api/auth/register', json={
-                'username': payload, 'email': f'x{hash(payload)}@x.com', 'password': 'pass123',
+                'username': payload, 'email': f'x{hash(payload)}@x.com', 'password': 'Pass1234',
             })
             # Must either succeed (stored safely) or fail validation — never 500
             self.assertNotEqual(res.status_code, 500,
@@ -249,8 +252,8 @@ class TestInputValidation(BaseTestCase):
     def test_script_tag_in_username_stored_as_text(self):
         """XSS payload stored in username must come back as plain text, not interpreted."""
         xss = '<script>alert(1)</script>'
-        self._register(username=xss, email='xss@example.com', password='pass123')
-        self._login(email='xss@example.com', password='pass123')
+        self._register(username=xss, email='xss@example.com', password='Pass1234')
+        self._login(email='xss@example.com', password='Pass1234')
         me = self.client.get('/api/auth/me').get_json()
         # Value must be stored literally — the API returns JSON, not HTML, so it's safe
         self.assertEqual(me['username'], xss)
@@ -385,11 +388,11 @@ class TestPasswordSecurity(BaseTestCase):
                              f'Expected 401 for wrong password {bad_pw!r}, got {res.status_code}')
 
     def test_password_is_hashed_in_db(self):
-        self._register(password='mypassword')
+        self._register(password='Mypassword1')
         conn = flask_app.get_db()
         user = conn.execute("SELECT password_hash FROM users WHERE email='alice@example.com'").fetchone()
         conn.close()
-        self.assertNotEqual(user['password_hash'], 'mypassword')
+        self.assertNotEqual(user['password_hash'], 'Mypassword1')
         self.assertTrue(user['password_hash'].startswith('pbkdf2:') or
                         user['password_hash'].startswith('scrypt:'))
 
@@ -434,9 +437,9 @@ class TestMatchDataIntegrity(BaseTestCase):
 
         # Register Bob and try to access Alice's match by id
         self.client.post('/api/auth/register', json={
-            'username': 'bob', 'email': 'bob@example.com', 'password': 'pass123',
+            'username': 'bob', 'email': 'bob@example.com', 'password': 'Pass1234',
         })
-        self._login(email='bob@example.com', password='pass123')
+        self._login(email='bob@example.com', password='Pass1234')
 
         res = self.client.get(f'/api/matches/{match_id}')
         # No such route exists — must be 404 or 405, never 200
@@ -469,7 +472,7 @@ class TestDataLeakage(BaseTestCase):
     def test_error_responses_dont_leak_stack_traces(self):
         """Error messages must be user-facing strings, not Python tracebacks."""
         res = self.client.post('/api/auth/login', json={
-            'email': 'nobody@example.com', 'password': 'pass123',
+            'email': 'nobody@example.com', 'password': 'Pass1234',
         })
         body = res.get_data(as_text=True)
         self.assertNotIn('Traceback', body)
