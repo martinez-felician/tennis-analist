@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Analyst — Track every point. Fix what loses it.</title>
+    <meta name="description" content="Log your tennis match in one or two taps a point, then get a practice plan built around your real weaknesses.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#14513a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Tennis Analyst">
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon-180.png">
+    <style>
+        :root {
+            --green: #14513a; --green-dark: #0f3d2c; --clay: #b64a1c; --clay-light: #c5521f;
+            --cream: #faf3e4; --line: #eee4cf; --ink: #0f3d2c; --dim: #4f5a50;
+            --lines: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260' fill='none' stroke='%23ffffff' stroke-opacity='.12' stroke-width='2'%3E%3Cpath d='M0 46h400M0 214h400M200 46v168M90 20L70 240M310 20l20 220M30 120h340'/%3E%3C/svg%3E");
+            --shadow: 0 1px 0 rgba(15,61,44,.05), 0 14px 28px -16px rgba(15,61,44,.35);
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { margin: 0; background: var(--cream); color: var(--ink); font-family: 'DM Sans', sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+        a { color: inherit; text-decoration: none; }
+        h1, h2, h3 { font-family: 'DM Serif Display', serif; font-weight: 400; margin: 0; line-height: 1.05; }
+        .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+        /* Nav */
+        .nav { background: #fff; position: sticky; top: 0; z-index: 10; }
+        .nav-in { display: flex; align-items: center; justify-content: space-between; height: 62px; max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+        .brand { display: flex; align-items: center; gap: 10px; font-family: 'DM Serif Display', serif; font-size: 1.25rem; }
+        .brand img { width: 34px; height: 34px; border-radius: 9px; }
+        .nav-links { display: none; gap: 26px; font-size: .9rem; font-weight: 600; color: var(--dim); }
+        .nav-links a:hover { color: var(--clay); }
+        .nav-login { font-size: .9rem; font-weight: 700; color: var(--green); }
+        .stripes > i { display: block; }
+        .stripes > i:nth-child(1) { height: 6px; background: var(--green); }
+        .stripes > i:nth-child(2) { height: 3px; background: #fff; }
+        .stripes > i:nth-child(3) { height: 6px; background: var(--clay); }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; height: 54px; padding: 0 28px; border-radius: 999px; font-weight: 700; font-size: 1rem; border: 2px solid transparent; transition: transform .15s, box-shadow .15s; white-space: nowrap; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-clay { background: var(--clay); color: #fff; }
+        .btn-cream { background: var(--cream); color: var(--green); }
+        .btn-out { background: #fff; color: var(--green); border-color: var(--green); }
+        .btn-sm { height: 48px; }
+
+        /* Hero */
+        .hero { background: var(--green) var(--lines) center/cover no-repeat; color: #fff; overflow: hidden; }
+        .hero-in { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 34px; padding: 34px 22px 0; max-width: 1200px; margin: 0 auto; }
+        .eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+        .hero .eyebrow { color: #f4e8d6; }
+        .hero h1 { font-size: 2.6rem; margin-top: 12px; }
+        .hero p { color: #e6efe9; font-size: 1.05rem; max-width: 460px; margin: 14px auto 0; }
+        .hero-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; width: 100%; max-width: 360px; margin-left: auto; margin-right: auto; }
+
+        /* Phone mockup (built in CSS) */
+        .phone { width: 262px; padding: 8px 8px 0; border-radius: 38px 38px 0 0; background: var(--green-dark); box-shadow: 0 30px 50px -24px rgba(0,0,0,.5); text-align: left; }
+        .screen { background: var(--cream); border-radius: 30px 30px 0 0; padding: 14px 12px 18px; display: flex; flex-direction: column; gap: 10px; }
+        .sb { background: var(--green); color: #fff; border-radius: 18px; padding: 10px 12px; }
+        .sb-h { display: flex; justify-content: flex-end; gap: 12px; font-size: .5rem; letter-spacing: .14em; font-weight: 700; opacity: .7; }
+        .sb-r { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,.18); margin-top: 5px; padding-top: 6px; }
+        .sb-r b { font-size: .75rem; display: flex; align-items: center; gap: 6px; }
+        .sb-r b i { width: 7px; height: 7px; border-radius: 50%; background: var(--clay-light); }
+        .sb-r.dim { opacity: .85; }
+        .sb-r.dim b { padding-left: 13px; font-weight: 600; }
+        .sb-n { font-family: 'DM Serif Display', serif; font-size: 1.05rem; display: flex; gap: 16px; }
+        .sb-n span:last-child { font-size: 1.35rem; margin-top: -3px; }
+        .mlabel { font-size: .5rem; font-weight: 700; letter-spacing: .16em; }
+        .mrow { display: flex; gap: 6px; }
+        .mrow span { flex: 1; height: 38px; border-radius: 12px; font-size: .5rem; font-weight: 700; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15; padding: 0 3px; }
+        .mrow.win span { background: var(--clay); color: #fff; }
+        .mrow.lose span { background: #fff; color: var(--green); border: 2px solid var(--green); }
+        .undo { height: 38px; border-radius: 19px; border: 2px solid var(--green); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .6rem; color: var(--green); }
+
+        /* Sections */
+        section { padding: 64px 0 0; }
+        .sec-title { text-align: left; }
+        .sec-title .eyebrow { color: var(--clay); }
+        .sec-title h2 { font-size: 2rem; margin-top: 8px; }
+        .card { background: #fff; border-radius: 24px; padding: 20px; box-shadow: var(--shadow); }
+        .steps { display: grid; gap: 14px; margin-top: 22px; }
+        .step { display: flex; gap: 14px; align-items: flex-start; }
+        .step .n { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--clay); color: #fff; font-family: 'DM Serif Display', serif; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; }
+        .step h3 { font-size: 1.4rem; }
+        .step p { margin: 6px 0 0; color: var(--dim); font-size: .92rem; }
+        .ticks { display: grid; gap: 12px; margin-top: 22px; }
+        .tick { display: flex; gap: 10px; align-items: center; font-size: .92rem; }
+        .tick::before { content: ""; flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--cream) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314513a' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4L18 8'/%3E%3C/svg%3E") center/16px no-repeat; }
+        .plans { display: grid; gap: 14px; margin-top: 22px; }
+        .plan { border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); background: #fff; }
+        .plan.pro { background: var(--green) var(--lines) center/cover; color: #fff; }
+        .plan .tag { font-size: .72rem; font-weight: 700; letter-spacing: .16em; color: var(--dim); display: flex; justify-content: space-between; align-items: center; }
+        .plan.pro .tag { color: #f4e8d6; }
+        .plan .tag em { font-style: normal; letter-spacing: 0; padding: 3px 11px; border-radius: 999px; background: var(--clay); color: #fff; font-size: .7rem; }
+        .price { font-family: 'DM Serif Display', serif; font-size: 2.6rem; line-height: 1; }
+        .price small { font-family: 'DM Sans', sans-serif; font-size: 1rem; opacity: .8; }
+        .plan .tick::before { background-color: var(--cream); }
+        .plan.pro .tick::before { background-color: var(--clay); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4L18 8'/%3E%3C/svg%3E"); }
+        .plan .ticks { margin-top: 0; flex: 1; }
+        .install { display: grid; gap: 16px; margin-top: 22px; }
+        .install h3 { font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; }
+        .install p { margin: 4px 0 0; color: var(--dim); font-size: .92rem; }
+        .install hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
+        .cta { margin: 64px 16px 0; background: var(--green) var(--lines) center/cover; color: #fff; text-align: center; border-radius: 32px; padding: 34px 22px; }
+        .cta h2 { font-size: 2rem; }
+        .cta .btn { margin-top: 20px; width: 100%; max-width: 320px; }
+        footer { padding: 30px 22px 40px; text-align: center; font-size: .8rem; color: var(--dim); }
+        footer .brand { justify-content: center; margin-bottom: 8px; color: var(--ink); font-size: 1rem; }
+        footer .brand img { width: 24px; height: 24px; border-radius: 6px; }
+        footer a { text-decoration: underline; text-underline-offset: 3px; }
+
+        @media (min-width: 860px) {
+            .nav-in { height: 70px; padding: 0 40px; }
+            .nav-links { display: flex; }
+            .hero-in { flex-direction: row; justify-content: space-between; align-items: flex-end; text-align: left; padding: 70px 60px 0; gap: 40px; }
+            .hero h1 { font-size: 4.2rem; }
+            .hero p { margin-left: 0; font-size: 1.15rem; }
+            .hero-cta { flex-direction: row; max-width: 520px; margin-left: 0; }
+            .hero-cta .btn-clay { flex: 1; }
+            .hero-text { padding-bottom: 80px; max-width: 580px; }
+            .phone { width: 300px; margin-right: 30px; flex: none; }
+            .screen { padding: 16px 14px 28px; }
+            section { padding-top: 90px; }
+            .sec-title h2 { font-size: 2.4rem; }
+            .steps { grid-template-columns: repeat(3, 1fr); }
+            .center-md { text-align: center; }
+            .plans { grid-template-columns: 1fr 1fr; max-width: 760px; margin-left: auto; margin-right: auto; }
+            .install { grid-template-columns: 1fr 1px 1fr; gap: 28px; }
+            .install hr { border: 0; border-left: 1px solid var(--line); height: 100%; }
+            .install-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+            .cta { margin: 90px auto 0; max-width: 1040px; padding: 56px; border-radius: 36px; }
+            .cta h2 { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="nav">
+        <div class="nav-in">
+            <a href="/" class="brand"><img src="/logo.svg" alt="">Tennis Analyst</a>
+            <nav class="nav-links" aria-label="Sections">
+                <a href="#how">How it works</a>
+                <a href="#plans">Plans</a>
+                <a href="#install">Install</a>
+            </nav>
+            <a href="/login" class="nav-login" id="nav-login">Log in</a>
+        </div>
+        <div class="stripes" aria-hidden="true"><i></i><i></i><i></i></div>
+    </header>
+
+    <main>
+        <div class="hero">
+            <div class="hero-in">
+                <div class="hero-text">
+                    <div class="eyebrow">Tennis match tracker</div>
+                    <h1>Track every point.<br>Fix what loses it.</h1>
+                    <p>Log your match in one or two taps a point, then get a practice plan built around your real weaknesses.</p>
+                    <div class="hero-cta">
+                        <a href="/app" class="btn btn-clay">Try it free, no sign-up</a>
+                        <a href="/login" class="btn btn-cream" id="hero-login">Log in</a>
+                    </div>
+                </div>
+                <div class="phone" aria-hidden="true">
+                    <div class="screen">
+                        <div class="sb">
+                            <div class="sb-h"><span>SETS</span><span>GAMES</span><span>POINTS</span></div>
+                            <div class="sb-r"><b><i></i>Carlos</b><span class="sb-n"><span>1</span><span>4</span><span>30</span></span></div>
+                            <div class="sb-r dim"><b>Rafael</b><span class="sb-n"><span>0</span><span>3</span><span>15</span></span></div>
+                        </div>
+                        <div class="mlabel" style="color:var(--clay)">I WON IT</div>
+                        <div class="mrow win"><span>Ace</span><span>Forehand Winner</span><span>Backhand Winner</span></div>
+                        <div class="mlabel" style="color:var(--green)">I LOST IT</div>
+                        <div class="mrow lose"><span>Forehand Error</span><span>Backhand Error</span><span>Forced Error</span></div>
+                        <div class="undo">Undo last point</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section id="how">
+            <div class="wrap">
+                <div class="sec-title center-md"><div class="eyebrow">How it works</div><h2>Three steps, then back to the court</h2></div>
+                <div class="steps">
+                    <div class="card step"><span class="n">1</span><div><h3>Tap the point</h3><p>Pick the serve, then how it ended. Winner or error, one screen.</p></div></div>
+                    <div class="card step"><span class="n">2</span><div><h3>Watch the stats build</h3><p>Winners, errors, serve percentages and win rate, live as you play.</p></div></div>
+                    <div class="card step"><span class="n">3</span><div><h3>Get your practice plan</h3><p>Your biggest leaks become drills with time and coaching cues.</p></div></div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="wrap">
+                <div class="sec-title center-md"><div class="eyebrow">Why it works</div><h2>Built for the baseline, not the office</h2></div>
+                <div class="card" style="margin-top:22px; max-width:520px; margin-left:auto; margin-right:auto">
+                    <div class="ticks" style="margin-top:0">
+                        <div class="tick">Works offline once installed</div>
+                        <div class="tick">Undo any point instantly</div>
+                        <div class="tick">Big buttons for sweaty hands</div>
+                        <div class="tick">Your matches saved to your account</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="plans">
+            <div class="wrap">
+                <div class="sec-title center-md"><div class="eyebrow">Plans</div><h2>Start free. Upgrade when it helps.</h2></div>
+                <div class="plans">
+                    <div class="plan">
+                        <div class="tag">FREE</div>
+                        <div class="price">$0</div>
+                        <div class="ticks">
+                            <div class="tick">Live scoring and point tracker</div>
+                            <div class="tick">Stats for the current match</div>
+                            <div class="tick">Save matches to your account</div>
+                            <div class="tick">Last 3 matches in history</div>
+                        </div>
+                        <a href="/app" class="btn btn-out btn-sm">Try it free</a>
+                    </div>
+                    <div class="plan pro">
+                        <div class="tag">PREMIUM <em>Best value</em></div>
+                        <div class="price">$7<small> / month</small></div>
+                        <div class="ticks">
+                            <div class="tick">Everything in Free</div>
+                            <div class="tick">Full match history</div>
+                            <div class="tick">All-time stats and shot breakdown</div>
+                            <div class="tick">Personalized practice plan</div>
+                            <div class="tick">CSV export</div>
+                        </div>
+                        <a href="/login?pending=1" class="btn btn-clay btn-sm">Get Premium</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="install">
+            <div class="wrap install-wrap">
+                <div class="sec-title"><div class="eyebrow">Install</div><h2>Put it on your home screen</h2></div>
+                <div class="card install">
+                    <div><h3>iPhone (Safari)</h3><p>Tap Share, then "Add to Home Screen".</p></div>
+                    <hr>
+                    <div><h3>Android (Chrome)</h3><p>Tap the menu, then "Install app".</p></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="cta">
+            <h2>Your next match starts with one tap.</h2>
+            <a href="/app" class="btn btn-clay">Start a match</a>
+        </div>
+    </main>
+
+    <footer>
+        <a href="/" class="brand"><img src="/logo.svg" alt="">Tennis Analyst</a>
+        <a href="/login">Log in</a> · <a href="/login?pending=1">Register</a> · <a href="#plans">Plans</a>
+    </footer>
+
+    <script>
+        // If the visitor is already signed in, point the buttons to the app
+        fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(u => {
+            if (!u) return;
+            const nav = document.getElementById('nav-login'); nav.textContent = 'Open app'; nav.href = '/home';
+            const hero = document.getElementById('hero-login'); hero.textContent = 'Open my account'; hero.href = '/home';
+        }).catch(() => {});
+    </script>
+</body>
+</html>

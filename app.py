@@ -196,6 +196,10 @@ def send_reset_email(to_address, token):
 # ── Static files ──────────────────────────────────────────────────────────────
 
 @app.route('/')
+def landing_page():
+    return send_from_directory(BASE_DIR, 'landing.html')
+
+@app.route('/app')
 def home():
     return send_from_directory(BASE_DIR, 'index.html')
 

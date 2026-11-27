@@ -171,7 +171,7 @@
         }
 
         function redirectAfterAuth() {
-            window.location.href = localStorage.getItem('pendingMatch') ? '/' : '/home';
+            window.location.href = localStorage.getItem('pendingMatch') ? '/app' : '/home';
         }
 
         async function handleLogin(e) {

@@ -502,6 +502,7 @@ class TestWebhook(BaseTestCase):
 class TestStaticRoutes(BaseTestCase):
     def test_home(self):
         self.assertEqual(self.client.get('/').status_code, 200)
+        self.assertEqual(self.client.get('/app').status_code, 200)
 
     def test_login_page(self):
         self.assertEqual(self.client.get('/login').status_code, 200)

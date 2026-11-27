@@ -1704,10 +1704,10 @@ initApp().then(() => {
   // Handle deep links from home page quick-access cards
   const params = new URLSearchParams(location.search);
   if (params.get('stats') === 'all') {
-    history.replaceState({}, '', '/');
+    history.replaceState({}, '', '/app');
     switchView('stats');
   } else if (params.get('view') === 'insights') {
-    history.replaceState({}, '', '/');
+    history.replaceState({}, '', '/app');
     switchView('insights');
   }
 });
