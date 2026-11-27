@@ -1,4 +1,4 @@
-const CACHE = 'tennis-analyst-v4';
+const CACHE = 'tennis-analyst-v5';
 const STATIC = ['/style.css', '/script.js', '/manifest.json', '/icon.svg', '/logo.svg'];
 
 // Cache static assets on install

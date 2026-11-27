@@ -214,6 +214,24 @@ nav { display: flex; gap: 6px; }
 }
 .back-btn:hover { color: var(--gold); border-color: rgba(201,168,76,0.5); }
 
+/* Step 1: win + lose methods on one screen */
+.point-section { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.point-section-title {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; margin: 6px 0 0;
+}
+.point-section-title.win  { color: var(--gold); }
+.point-section-title.lose { color: rgba(255,120,120,0.9); }
+/* Compact buttons so both lists fit on a phone screen without scrolling */
+.point-section .method-grid { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.point-section .method-btn { padding: 6px 4px; gap: 2px; min-height: 50px; }
+#step-1 { gap: 10px; }
+#step-1 .step-question {   /* kept for screen readers, hidden visually to save vertical space */
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.point-section .method-emoji { font-size: 1.15rem; line-height: 1; }
+.point-section .method-label { font-size: 0.68rem; line-height: 1.15; }
 .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 .method-btn {
     display: flex; flex-direction: column;

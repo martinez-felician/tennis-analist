@@ -900,30 +900,25 @@ function switchView(view, force) {
   if (view === 'insights') renderInsights();
 }
 
-// --- Step 1: Outcome ---
-function selectOutcome(won) {
-  currentOutcome = won;
-  let methods = won ? [...WIN_METHODS] : [...LOSS_METHODS];
-  if (won) {
-    if (!isServing) methods = methods.filter(m => m.key !== 'ace');
-  } else {
-    // df is handled by the Double Fault button in step-0, never comes through here
-    methods = methods.filter(m => m.key !== 'df');
-    // miss-return is only valid when returning
-    if (isServing) methods = methods.filter(m => m.key !== 'miss-return');
-  }
-  const grid = document.getElementById('method-grid');
-  grid.innerHTML = '';
-  methods.forEach(m => {
-    const btn = document.createElement('button');
-    btn.className = 'method-btn ' + (won ? 'win-method' : 'lose-method');
-    btn.onclick = () => selectMethod(m.key);
-    btn.innerHTML = `<span class="method-emoji">${m.emoji}</span><span class="method-label">${m.label}</span>`;
-    grid.appendChild(btn);
-  });
-  document.getElementById('step2-title').textContent = won ? 'How did you win it?' : 'How did you lose it?';
-  document.getElementById('step-1').classList.remove('active');
-  document.getElementById('step-2').classList.add('active');
+// --- Step 1: one tap picks both the outcome and how the point ended ---
+function renderPointGrids() {
+  const winMethods  = WIN_METHODS.filter(m => isServing || m.key !== 'ace');
+  // df is handled by the Double Fault button in step-0; miss-return only applies when returning
+  const loseMethods = LOSS_METHODS.filter(m => m.key !== 'df' && (!isServing || m.key !== 'miss-return'));
+  const fill = (id, methods, cls) => {
+    const grid = document.getElementById(id);
+    if (!grid) return;
+    grid.innerHTML = '';
+    methods.forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'method-btn ' + cls;
+      btn.onclick = () => selectMethod(m.key);
+      btn.innerHTML = `<span class="method-emoji">${m.emoji}</span><span class="method-label">${m.label}</span>`;
+      grid.appendChild(btn);
+    });
+  };
+  fill('grid-win',  winMethods,  'win-method');
+  fill('grid-lose', loseMethods, 'lose-method');
 }
 
 // --- XSS sanitization ---
@@ -1011,15 +1006,9 @@ function undoLastPoint() {
   showToast('Last point undone.');
 }
 
-// --- Step 2: Back ---
-function goBack() {
-  document.getElementById('step-2').classList.remove('active');
-  document.getElementById('step-1').classList.add('active');
-  document.getElementById('step1-back-row').style.display = isServing ? 'block' : 'none';
-}
-
-// --- Step 2: Method ---
+// --- Method tap (records the point) ---
 function selectMethod(key) {
+  currentOutcome = WIN_METHODS.some(m => m.key === key);
   captureState();
   stats[key] = (stats[key] || 0) + 1;
 
@@ -1343,6 +1332,7 @@ function selectServe(type) {
     return;
   }
   currentServeType = type;
+  renderPointGrids();
   document.getElementById('step-0').classList.remove('active');
   document.getElementById('step-1').classList.add('active');
   document.getElementById('step1-back-row').style.display = 'block';
@@ -1356,13 +1346,13 @@ function goBackToServe() {
 }
 
 function showInitialStep() {
-  document.getElementById('step-2').classList.remove('active');
   document.getElementById('step-1').classList.remove('active');
   document.getElementById('step-0').classList.remove('active');
   document.getElementById('step1-back-row').style.display = 'none';
   if (isServing) {
     document.getElementById('step-0').classList.add('active');
   } else {
+    renderPointGrids();
     document.getElementById('step-1').classList.add('active');
   }
 }
@@ -1387,7 +1377,6 @@ function resetMatch() {
   // Deactivate all steps
   document.getElementById('step-0').classList.remove('active');
   document.getElementById('step-1').classList.remove('active');
-  document.getElementById('step-2').classList.remove('active');
 
   updateScore();
   updateStats();
@@ -1398,10 +1387,10 @@ function resetMatch() {
   document.querySelector('.setup-opts[data-group="sets"]    [data-value="3"]').classList.add('active');
   document.querySelector('.setup-opts[data-group="games"]   [data-value="6"]').classList.add('active');
   document.querySelector('.setup-opts[data-group="deuce"]   [data-value="yes"]').classList.add('active');
-  document.querySelector('.setup-opts[data-group="tiebreak"][data-value="yes"]').classList.add('active');
-  document.querySelector('.setup-opts[data-group="finalset"][data-value="full"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="tiebreak"] [data-value="yes"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="finalset"] [data-value="full"]').classList.add('active');
   document.getElementById('field-finalset').style.display = 'flex';
-  document.querySelector('.setup-opts[data-group="tblength"][data-value="7"]').classList.add('active');
+  document.querySelector('.setup-opts[data-group="tblength"] [data-value="7"]').classList.add('active');
   document.querySelector('.setup-opts[data-group="role"]    [data-value="serving"]').classList.add('active');
   document.getElementById('field-tblength').style.display = 'none';
   const oppInput  = document.getElementById('setup-opponent');

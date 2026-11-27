@@ -96,31 +96,20 @@
             </div>
         </div>
 
-        <!-- Step 1: Win or Lose -->
+        <!-- Step 1: How did the point end? (one tap = outcome + method) -->
         <div id="step-1" class="step">
             <div id="step1-back-row" style="display:none; width:100%">
                 <button class="back-btn" onclick="goBackToServe()">← Back</button>
             </div>
-            <p class="step-question">Did you win the point?</p>
-            <div class="outcome-row">
-                <button class="outcome-btn win-btn" onclick="selectOutcome(true)">
-                    <span class="outcome-icon">✓</span>
-                    <span class="outcome-label">I Won</span>
-                </button>
-                <button class="outcome-btn lose-btn" onclick="selectOutcome(false)">
-                    <span class="outcome-icon">✗</span>
-                    <span class="outcome-label">I Lost</span>
-                </button>
+            <p class="step-question">How did the point end?</p>
+            <div class="point-section">
+                <p class="point-section-title win">I won it</p>
+                <div class="method-grid" id="grid-win"></div>
             </div>
-        </div>
-
-        <!-- Step 2: How -->
-        <div id="step-2" class="step">
-            <div class="step2-header">
-                <button class="back-btn" onclick="goBack()">← Back</button>
-                <p class="step-question" id="step2-title">How did you win it?</p>
+            <div class="point-section">
+                <p class="point-section-title lose">I lost it</p>
+                <div class="method-grid" id="grid-lose"></div>
             </div>
-            <div class="method-grid" id="method-grid"></div>
         </div>
 
         <!-- Toast notification -->
@@ -321,7 +310,7 @@
             <div class="onboard-step active" id="ostep-0">
                 <div class="onboard-icon">🎾</div>
                 <h3 class="onboard-title">Track every point</h3>
-                <p class="onboard-desc">After each point, tap through 3 quick steps: serve type → win or lose → how it ended. Takes just 3 taps per point.</p>
+                <p class="onboard-desc">After each point, pick your serve (when serving), then tap how the point ended. Just 1 or 2 taps per point.</p>
             </div>
             <div class="onboard-step" id="ostep-1">
                 <div class="onboard-icon">📊</div>
