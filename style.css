@@ -463,6 +463,19 @@ nav { display: flex; gap: 6px; }
 #input-name::placeholder { color: rgba(138,158,140,0.45); }
 #input-name:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.35); }
 
+/* Setup: collapsed advanced options */
+.setup-advanced { border: 1px solid rgba(201,168,76,0.15); border-radius: var(--radius); padding: 0 14px; }
+.setup-advanced > summary {
+    list-style: none; cursor: pointer; padding: 12px 0;
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--text-dim);
+}
+.setup-advanced > summary::-webkit-details-marker { display: none; }
+.setup-advanced > summary::after { content: '▾'; float: right; color: var(--gold); }
+.setup-advanced[open] > summary::after { content: '▴'; }
+.setup-summary { margin-left: 6px; letter-spacing: 0.04em; text-transform: none; font-weight: 400; color: var(--gold); }
+.setup-advanced-body { display: flex; flex-direction: column; gap: 18px; padding: 4px 0 16px; }
+
 .setup-opts { display: flex; gap: 8px; flex-wrap: wrap; }
 .setup-opt {
     padding: 8px 16px; border: 1px solid rgba(201,168,76,0.2);

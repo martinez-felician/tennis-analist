@@ -1304,6 +1304,50 @@ function selectOpt(btn) {
   if (group === 'finalset') {
     document.getElementById('field-tblength').style.display = btn.dataset.value === 'tiebreak' ? 'flex' : 'none';
   }
+  updateSetupSummary();
+}
+
+// --- Setup: summary line + remember last settings ---
+const SETUP_GROUPS = ['phase', 'sets', 'games', 'tiebreak', 'deuce', 'role', 'finalset', 'tblength'];
+
+function _setupVal(group) {
+  return document.querySelector(`.setup-opts[data-group="${group}"] .setup-opt.active`)?.dataset.value;
+}
+
+function updateSetupSummary() {
+  const el = document.getElementById('setup-summary');
+  if (!el) return;
+  const parts = [
+    'Best of ' + (_setupVal('sets') || '3'),
+    (_setupVal('games') || '6') + ' games',
+    _setupVal('deuce') === 'no' ? 'No-Ad' : 'Advantage',
+  ];
+  el.textContent = '· ' + parts.join(' · ');
+}
+
+function saveSetupPrefs() {
+  try {
+    const prefs = {};
+    SETUP_GROUPS.forEach(g => { prefs[g] = _setupVal(g); });
+    prefs.club = document.getElementById('setup-club')?.value.trim() || '';
+    localStorage.setItem('ta-setup-prefs', JSON.stringify(prefs));
+  } catch (e) { /* storage unavailable: ignore */ }
+}
+
+function restoreSetupPrefs() {
+  try {
+    const prefs = JSON.parse(localStorage.getItem('ta-setup-prefs') || 'null');
+    if (prefs) {
+      SETUP_GROUPS.forEach(g => {
+        if (!prefs[g]) return;
+        const btn = document.querySelector(`.setup-opts[data-group="${g}"] .setup-opt[data-value="${prefs[g]}"]`);
+        if (btn) selectOpt(btn);
+      });
+      const club = document.getElementById('setup-club');
+      if (club && prefs.club) club.value = prefs.club;
+    }
+  } catch (e) { /* ignore corrupt prefs */ }
+  updateSetupSummary();
 }
 
 function startMatch() {
@@ -1321,6 +1365,7 @@ function startMatch() {
   matchConfig.tiebreakLength  = parseInt(getVal('tblength')) || 7;
   matchConfig.startServing    = getVal('role') !== 'returning';
 
+  saveSetupPrefs();
   isServing = matchConfig.startServing;
   matchStarted = true;
   document.getElementById('scoreboard-player').textContent   = matchConfig.playerName;
@@ -1544,6 +1589,7 @@ async function saveMatch() {
 
 // --- Init ---
 updateScore();
+restoreSetupPrefs();
 initApp().then(() => {
   // Restore an interrupted in-progress match
   if (!matchStarted && restoreState()) {
