@@ -42,26 +42,26 @@ let stats = {
 };
 
 const WIN_METHODS = [
-  { key: 'ace',     emoji: '⚡', label: 'Ace' },
-  { key: 'fh-win',  emoji: '💪', label: 'Forehand Winner' },
-  { key: 'bh-win',  emoji: '🎯', label: 'Backhand Winner' },
-  { key: 'vol',     emoji: '🏐', label: 'Volley Winner' },
-  { key: 'oh',      emoji: '💥', label: 'Overhead / Smash' },
-  { key: 'drop',    emoji: '🪄', label: 'Drop Shot' },
-  { key: 'opp-err', emoji: '🤦', label: 'Opponent Error' },
+  { key: 'ace',     label: 'Ace' },
+  { key: 'fh-win',  label: 'Forehand Winner' },
+  { key: 'bh-win',  label: 'Backhand Winner' },
+  { key: 'vol',     label: 'Volley Winner' },
+  { key: 'oh',      label: 'Overhead / Smash' },
+  { key: 'drop',    label: 'Drop Shot' },
+  { key: 'opp-err', label: 'Opponent Error' },
 ];
 
 const LOSS_METHODS = [
-  { key: 'df',           emoji: '⚡', label: 'Double Fault' },
-  { key: 'miss-return',  emoji: '🎾', label: 'Miss Return' },
-  { key: 'fh-ue',        emoji: '❌', label: 'Forehand Unforced Error' },
-  { key: 'bh-ue',        emoji: '❌', label: 'Backhand Unforced Error' },
-  { key: 'fh-fe',        emoji: '💨', label: 'Forehand Forced Error' },
-  { key: 'bh-fe',        emoji: '💨', label: 'Backhand Forced Error' },
-  { key: 'opp-win',      emoji: '🏆', label: 'Opponent Winner' },
-  { key: 'vol-err',      emoji: '🏐', label: 'Missed Volley' },
-  { key: 'oh-err',       emoji: '💥', label: 'Missed Overhead' },
-  { key: 'drop-err',     emoji: '🪄', label: 'Missed Drop Shot' },
+  { key: 'df',           label: 'Double Fault' },
+  { key: 'miss-return',  label: 'Miss Return' },
+  { key: 'fh-ue',        label: 'Forehand Unforced Error' },
+  { key: 'bh-ue',        label: 'Backhand Unforced Error' },
+  { key: 'fh-fe',        label: 'Forehand Forced Error' },
+  { key: 'bh-fe',        label: 'Backhand Forced Error' },
+  { key: 'opp-win',      label: 'Opponent Winner' },
+  { key: 'vol-err',      label: 'Missed Volley' },
+  { key: 'oh-err',       label: 'Missed Overhead' },
+  { key: 'drop-err',     label: 'Missed Drop Shot' },
 ];
 
 // --- Practice Plan Data ---
@@ -815,15 +815,15 @@ async function renderInsights() {
   const summaryHTML = `
     <div class="plan-summary">
       <div class="plan-summary-title">${sourceLabel} · ${totalPoints} points</div>
-      ${result.weaknesses.map(w => `<div class="plan-summary-row"><span class="insight-badge red">Weakness</span>${w.emoji} ${w.label} — ${w.count}x</div>`).join('')}
-      ${result.strengths.map(s  => `<div class="plan-summary-row"><span class="insight-badge green">Strength</span>${s.emoji} ${s.label} — ${s.count}x</div>`).join('')}
+      ${result.weaknesses.map(w => `<div class="plan-summary-row"><span class="insight-badge red">Weakness</span>${w.label} — ${w.count}x</div>`).join('')}
+      ${result.strengths.map(s  => `<div class="plan-summary-row"><span class="insight-badge green">Strength</span>${s.label} — ${s.count}x</div>`).join('')}
     </div>
   `;
 
   if (!isPremium) {
     contentEl.innerHTML = summaryHTML + `
       <div class="match-card-locked">
-        <span class="lock-icon">🔒</span>
+        <span class="lock-icon"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></span>
         <div>
           <strong>Practice Plan — Premium only</strong>
           <p>Upgrade to get a personalized multi-day drill plan built around your weaknesses.</p>
@@ -861,7 +861,7 @@ async function renderInsights() {
               <span class="drill-name">${d.name}</span>
             </div>
             <p class="drill-desc">${d.desc}</p>
-            <div class="drill-cue"><span class="drill-cue-icon">💡</span><span>${d.cue}</span></div>
+            <div class="drill-cue"><span class="drill-cue-icon"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></span><span>${d.cue}</span></div>
           </div>
         `).join('')}
       </div>
@@ -901,24 +901,116 @@ function switchView(view, force) {
 }
 
 // --- Step 1: one tap picks both the outcome and how the point ended ---
-function renderPointGrids() {
-  const winMethods  = WIN_METHODS.filter(m => isServing || m.key !== 'ace');
+// Each list shows the player's 3 favorite shortcuts plus a "More" tile for the rest.
+const FAV_DEFAULTS = { win: ['ace', 'fh-win', 'bh-win'], lose: ['fh-ue', 'bh-ue', 'fh-fe'] };
+const pointUI = { expanded: { win: false, lose: false }, editing: null, draft: [] };
+let favs = loadFavs();
+
+function loadFavs() {
+  try {
+    const f = JSON.parse(localStorage.getItem('ta-favs'));
+    if (f && Array.isArray(f.win) && Array.isArray(f.lose)) return f;
+  } catch (e) { /* ignore */ }
+  return { win: [...FAV_DEFAULTS.win], lose: [...FAV_DEFAULTS.lose] };
+}
+function saveFavs() {
+  try { localStorage.setItem('ta-favs', JSON.stringify(favs)); } catch (e) { /* ignore */ }
+}
+
+function availableMethods(kind) {
+  if (kind === 'win') return WIN_METHODS.filter(m => isServing || m.key !== 'ace');
   // df is handled by the Double Fault button in step-0; miss-return only applies when returning
-  const loseMethods = LOSS_METHODS.filter(m => m.key !== 'df' && (!isServing || m.key !== 'miss-return'));
-  const fill = (id, methods, cls) => {
-    const grid = document.getElementById(id);
+  return LOSS_METHODS.filter(m => m.key !== 'df' && (!isServing || m.key !== 'miss-return'));
+}
+
+// Favorites that are valid right now, topped up with other methods so there are always 3.
+function shownFavs(kind, available) {
+  const keys = available.map(m => m.key);
+  const out = favs[kind].filter(k => keys.includes(k));
+  for (const k of keys) {
+    if (out.length >= 3) break;
+    if (!out.includes(k)) out.push(k);
+  }
+  return out.slice(0, 3);
+}
+
+function renderPointGrids() {
+  ['win', 'lose'].forEach(kind => {
+    const grid = document.getElementById('grid-' + kind);
     if (!grid) return;
+    const available = availableMethods(kind);
+    const editing = pointUI.editing === kind;
+    const hint = document.getElementById('hint-' + kind);
+    const editBtn = document.getElementById('edit-' + kind);
+    const cls = kind === 'win' ? 'win-method' : 'lose-method';
     grid.innerHTML = '';
-    methods.forEach(m => {
+    grid.classList.toggle('editing', editing);
+
+    const makeTile = (m) => {
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'method-btn ' + cls;
-      btn.onclick = () => selectMethod(m.key);
-      btn.innerHTML = `<span class="method-emoji">${m.emoji}</span><span class="method-label">${m.label}</span>`;
-      grid.appendChild(btn);
-    });
-  };
-  fill('grid-win',  winMethods,  'win-method');
-  fill('grid-lose', loseMethods, 'lose-method');
+      btn.textContent = m.label;
+      if (editing) {
+        const on = pointUI.draft.includes(m.key);
+        btn.classList.toggle('selected', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        btn.onclick = () => toggleDraft(kind, m.key);
+      } else {
+        btn.onclick = () => selectMethod(m.key);
+      }
+      return btn;
+    };
+
+    if (editing) {
+      available.forEach(m => grid.appendChild(makeTile(m)));
+    } else {
+      const favKeys = shownFavs(kind, available);
+      favKeys.forEach(k => grid.appendChild(makeTile(available.find(m => m.key === k))));
+      const rest = available.filter(m => !favKeys.includes(m.key));
+      if (rest.length) {
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'method-btn more-tile ' + cls;
+        const open = pointUI.expanded[kind];
+        more.setAttribute('aria-expanded', open ? 'true' : 'false');
+        more.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="' + (open ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6') + '"/></svg><span>' + (open ? 'Less' : 'More') + '</span>';
+        more.onclick = () => { pointUI.expanded[kind] = !pointUI.expanded[kind]; renderPointGrids(); };
+        grid.appendChild(more);
+        if (open) rest.forEach(m => grid.appendChild(makeTile(m)));
+      }
+    }
+
+    if (hint) hint.hidden = !editing;
+    if (editBtn) {
+      const other = pointUI.editing && !editing;
+      editBtn.disabled = !!other || (editing && pointUI.draft.length !== 3);
+      editBtn.querySelector('span').textContent = editing ? 'Done' : 'Edit';
+      editBtn.classList.toggle('done', editing);
+    }
+  });
+}
+
+function toggleFavEdit(kind) {
+  if (pointUI.editing === kind) {
+    if (pointUI.draft.length !== 3) return;
+    favs[kind] = pointUI.draft.slice();
+    saveFavs();
+    pointUI.editing = null;
+    pointUI.draft = [];
+  } else if (!pointUI.editing) {
+    pointUI.editing = kind;
+    pointUI.draft = shownFavs(kind, availableMethods(kind));
+  }
+  renderPointGrids();
+}
+
+function toggleDraft(kind, key) {
+  const i = pointUI.draft.indexOf(key);
+  if (i >= 0) pointUI.draft.splice(i, 1);
+  else if (pointUI.draft.length < 3) pointUI.draft.push(key);
+  else { showToast('Pick exactly 3. Tap one to remove it first.'); return; }
+  renderPointGrids();
 }
 
 // --- XSS sanitization ---
@@ -1008,6 +1100,7 @@ function undoLastPoint() {
 
 // --- Method tap (records the point) ---
 function selectMethod(key) {
+  pointUI.expanded.win = pointUI.expanded.lose = false;
   currentOutcome = WIN_METHODS.some(m => m.key === key);
   captureState();
   stats[key] = (stats[key] || 0) + 1;
@@ -1142,16 +1235,32 @@ function getPointDisplay(p1, p2) {
   return (labels[p1] ?? 40) + ' \u2013 ' + (labels[p2] ?? 40);
 }
 
-function updateScore() {
-  document.getElementById('sets').textContent = player1Sets + ' \u2013 ' + player2Sets;
-  document.getElementById('games').textContent = player1Games + ' \u2013 ' + player2Games;
-  document.getElementById('points').textContent = getPointDisplay(player1Points, player2Points);
+// Per-player point labels for the two-row scoreboard
+function getPointLabels(p1, p2) {
+  if (inTiebreak) return [String(p1), String(p2)];
+  const labels = [0, 15, 30, 40];
+  if (p1 >= 3 && p2 >= 3) {
+    if (!matchConfig.deuce || p1 === p2) return ['40', '40'];
+    return p1 > p2 ? ['AD', '40'] : ['40', 'AD'];
+  }
+  return [String(labels[p1] ?? 40), String(labels[p2] ?? 40)];
+}
 
-  const statusEl = document.getElementById('serve-status');
-  const statusTextEl = document.getElementById('serve-status-text');
-  if (statusEl && statusTextEl) {
-    statusTextEl.textContent = isServing ? 'Serving' : 'Returning';
-    statusEl.className = 'serve-status ' + (isServing ? 'serving' : 'returning');
+function updateScore() {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('sb-sets-1', player1Sets);   set('sb-sets-2', player2Sets);
+  set('sb-games-1', player1Games); set('sb-games-2', player2Games);
+  const [pt1, pt2] = getPointLabels(player1Points, player2Points);
+  set('sb-pts-1', pt1); set('sb-pts-2', pt2);
+
+  // Serve indicator: dot on the serving row (text for screen readers)
+  const dot1 = document.getElementById('sb-dot-1');
+  const dot2 = document.getElementById('sb-dot-2');
+  if (dot1 && dot2) {
+    dot1.classList.toggle('on', !!isServing);
+    dot2.classList.toggle('on', !isServing);
+    set('sb-serve-1', isServing ? ' (serving)' : '');
+    set('sb-serve-2', isServing ? '' : ' (serving)');
   }
 }
 
@@ -1241,7 +1350,7 @@ async function switchStatsTab(tab) {
       if (lockEl && locked > 0) {
         lockEl.innerHTML = `
           <div class="match-card-locked">
-            <span class="lock-icon">🔒</span>
+            <span class="lock-icon"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></span>
             <div>
               <strong>${locked} more match${locked !== 1 ? 'es' : ''} not included</strong>
               <p>Upgrade to Premium to see your full all-time statistics across all matches.</p>
@@ -1463,7 +1572,7 @@ async function initApp() {
   loggedInUsername = user.username || 'Player';
   isPremium = !!user.is_premium;
   const el = document.getElementById('nav-username');
-  if (el) el.textContent = '👤 ' + user.username;
+  if (el) el.textContent = user.username;
 
   showOnboardingIfNeeded();
 
@@ -1489,7 +1598,7 @@ function updateNavForAnonymous() {
   const menu = document.getElementById('nav-menu');
   if (!menu) return;
   const accountLink = menu.querySelector('a[href="/profile"]');
-  if (accountLink) { accountLink.href = '/login'; accountLink.innerHTML = '🔑 Log In / Sign Up'; }
+  if (accountLink) { accountLink.href = '/login'; accountLink.innerHTML = 'Log In / Sign Up'; }
   const logoutBtn = menu.querySelector('.nav-drop-logout');
   if (logoutBtn) logoutBtn.style.display = 'none';
 }
@@ -1518,7 +1627,7 @@ function onboardStep(dir) {
   document.getElementById('ostep-' + onboardingStep).classList.add('active');
   document.getElementById('odot-'  + onboardingStep).classList.add('active');
   document.getElementById('onboard-prev').style.visibility = onboardingStep > 0 ? 'visible' : 'hidden';
-  document.getElementById('onboard-next').textContent = onboardingStep === totalSteps - 1 ? 'Start Tracking' : 'Next →';
+  document.getElementById('onboard-next').textContent = onboardingStep === totalSteps - 1 ? 'Start Tracking' : 'Next';
 }
 
 async function logoutUser() {
@@ -1546,7 +1655,7 @@ async function saveMatch() {
   if (!isAuthenticated) {
     localStorage.setItem('pendingMatch', JSON.stringify(matchPayload));
     showToast('Create an account to save your match!');
-    btn.textContent = 'Create Account →';
+    btn.textContent = 'Create Account';
     setTimeout(() => { window.location.href = '/login?pending=1'; }, 1800);
     return;
   }
@@ -1559,7 +1668,7 @@ async function saveMatch() {
     body: JSON.stringify(matchPayload),
   });
   if (res.ok) {
-    btn.textContent = 'Saved ✓';
+    btn.textContent = 'Saved';
     localStorage.removeItem('ta-match-state');
     showToast('Match saved to your profile!');
   } else if (res.status === 401) {

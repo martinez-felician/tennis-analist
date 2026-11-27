@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from functools import wraps
 
 import stripe
-from flask import Flask, request, jsonify, session, send_from_directory, Response
+from flask import Flask, request, jsonify, session, send_from_directory, Response, abort
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -230,6 +230,12 @@ def serve_sw():
 @app.route('/icon.svg')
 def serve_icon():
     return send_from_directory(BASE_DIR, 'icon.svg')
+
+@app.route('/icon-<int:size>.png')
+def serve_icon_png(size):
+    if size not in (180, 192, 512):
+        abort(404)
+    return send_from_directory(BASE_DIR, f'icon-{size}.png')
 
 @app.route('/logo.svg')
 def serve_logo():

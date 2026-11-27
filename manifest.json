@@ -4,8 +4,8 @@
   "description": "Track your tennis matches and improve your game",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d1f0f",
-  "theme_color": "#c9a84c",
+  "background_color": "#faf3e4",
+  "theme_color": "#14513a",
   "orientation": "portrait",
   "shortcuts": [
     {
@@ -13,34 +13,58 @@
       "short_name": "Track",
       "description": "Start tracking a new match",
       "url": "/",
-      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "View Stats",
       "short_name": "Stats",
       "description": "View your match statistics",
       "url": "/?stats=all",
-      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "My Profile",
       "short_name": "Profile",
       "description": "View your match history and account",
       "url": "/profile",
-      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ]

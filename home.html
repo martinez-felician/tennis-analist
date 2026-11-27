@@ -6,15 +6,15 @@
     <title>Tennis Analyst — Home</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#c9a84c">
+    <meta name="theme-color" content="#14513a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Tennis Analyst">
     <link rel="icon" href="/logo.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.svg">
+    <link rel="apple-touch-icon" href="/icon-180.png">
 </head>
 <body>
 
@@ -24,12 +24,12 @@
             <span class="brand-name">Tennis Analyst</span>
         </div>
         <div class="nav-dropdown">
-            <button class="nav-dropdown-btn" onclick="toggleDropdown(event)">☰</button>
+            <button class="nav-dropdown-btn" onclick="toggleDropdown(event)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
             <div class="nav-dropdown-menu" id="nav-menu">
-                <a href="/home"    class="nav-drop-item">🏠 Home</a>
-                <a href="/"        class="nav-drop-item">🎾 Tracker</a>
-                <a href="/profile" class="nav-drop-item">👤 Account</a>
-                <button class="nav-drop-item nav-drop-logout" onclick="logoutUser()">🚪 Log Out</button>
+                <a href="/home"    class="nav-drop-item">Home</a>
+                <a href="/"        class="nav-drop-item">Tracker</a>
+                <a href="/profile" class="nav-drop-item">Account</a>
+                <button class="nav-drop-item nav-drop-logout" onclick="logoutUser()">Log Out</button>
             </div>
         </div>
     </header>
@@ -60,7 +60,7 @@
                 <strong>Start New Match</strong>
                 <span>Track every point in real time</span>
             </div>
-            <span class="home-cta-arrow">→</span>
+            <span class="home-cta-arrow"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
         </a>
 
         <!-- Quick stats -->
@@ -92,28 +92,28 @@
             <h2 class="home-section-title">Quick Access</h2>
             <div class="home-links">
                 <a href="/profile" class="home-link-card">
-                    <span class="home-link-icon">📋</span>
+                    <span class="home-link-icon"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 108-8 8 8 0 00-6 3M4 4v4h4M12 8v4l3 2"/></svg></span>
                     <div class="home-link-text">
                         <strong>Match History</strong>
                         <span>Review all your saved matches</span>
                     </div>
-                    <span class="home-link-arrow">→</span>
+                    <span class="home-link-arrow"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="/?stats=all" class="home-link-card">
-                    <span class="home-link-icon">📊</span>
+                    <span class="home-link-icon"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span>
                     <div class="home-link-text">
                         <strong>All-Time Stats</strong>
                         <span>See your aggregated shot breakdown</span>
                     </div>
-                    <span class="home-link-arrow">→</span>
+                    <span class="home-link-arrow"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
                 </a>
                 <a href="/?view=insights" class="home-link-card">
-                    <span class="home-link-icon">🧠</span>
+                    <span class="home-link-icon"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5zM9 9h6M9 13h6M9 17h3"/></svg></span>
                     <div class="home-link-text">
                         <strong>Practice Plan</strong>
                         <span>AI-generated drills from your last match</span>
                     </div>
-                    <span class="home-link-arrow">→</span>
+                    <span class="home-link-arrow"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
                 </a>
             </div>
         </div>

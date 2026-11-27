@@ -1,5 +1,5 @@
-const CACHE = 'tennis-analyst-v5';
-const STATIC = ['/style.css', '/script.js', '/manifest.json', '/icon.svg', '/logo.svg'];
+const CACHE = 'tennis-analyst-v6';
+const STATIC = ['/style.css', '/script.js', '/manifest.json', '/icon.svg', '/logo.svg', '/icon-192.png', '/icon-512.png', '/icon-180.png'];
 
 // Cache static assets on install
 self.addEventListener('install', event => {
