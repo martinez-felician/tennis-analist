@@ -1471,3 +1471,17 @@ header::after {
 .profile-tab { flex: 1; white-space: nowrap; }
 #win-rate-chart-section > div { height: 150px !important; }
 .profile-header { width: 100%; }
+
+/* ── Ajustes de revisión ── */
+.stats-tabs { background: #f1e7d0; border: 0; border-radius: 999px; }
+.stats-tab { border-radius: 999px; }
+.plan-session { background: #fff; border: 0; border-radius: 24px; }
+.plan-session .drill-card { background: #fff; border-top: 1px solid #eee4cf; }
+.plan-session-header { background: #faf3e4; }
+.match-modal-card { padding-top: 44px; }
+.match-modal-close { top: 12px; right: 14px; color: #0f3d2c; }
+.auth-error, .auth-success { min-height: 0; }
+.auth-error:empty, .auth-success:empty { display: none; }
+.auth-form .auth-error:empty, .settings-section .auth-error:empty { display: none; }
+.plan-drills { background: #fff !important; }
+.plan-session .drill-card { border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
