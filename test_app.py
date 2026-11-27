@@ -413,8 +413,10 @@ class TestMatchContent(BaseTestCase):
                 'stats':  {'ace': i},
                 'result': {'won': i % 2 == 0},
             })
-        matches = self.client.get('/api/matches').get_json()
-        self.assertEqual(len(matches), 5)
+        res = self.client.get('/api/matches')
+        # Free plan returns the latest 3; the total is reported in a header
+        self.assertEqual(len(res.get_json()), 3)
+        self.assertEqual(res.headers['X-Total-Matches'], '5')
 
     def test_match_id_increments(self):
         self._save_full_match()
@@ -725,3 +727,31 @@ class TestResetPassword(BaseTestCase):
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
+
+
+class TestFreeHistoryLimit(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self._register()
+        self._login()
+        for i in range(5):
+            self.client.post('/api/matches', json={
+                'config': {'opponentName': f'Opp{i}'}, 'stats': {'ace': 1},
+                'result': {'won': i % 2 == 0, 'player1Sets': 2, 'player2Sets': 0},
+            })
+
+    def test_free_user_gets_only_latest_three(self):
+        res = self.client.get('/api/matches')
+        data = res.get_json()
+        self.assertEqual(len(data), 3)
+        self.assertEqual(res.headers['X-Total-Matches'], '5')
+        self.assertEqual(res.headers['X-Total-Wins'], '3')
+        self.assertIn('Opp4', data[0]['config'])
+
+    def test_premium_user_gets_all(self):
+        conn = flask_app.get_db()
+        conn.execute("UPDATE users SET is_premium=1, subscription_status='active' WHERE email='test@example.com'")
+        conn.commit()
+        conn.close()
+        res = self.client.get('/api/matches')
+        self.assertEqual(len(res.get_json()), 5)

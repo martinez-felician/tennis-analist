@@ -154,20 +154,23 @@
             const res = await fetch('/api/matches');
             if (!res.ok) return;
             const matches = await res.json();
+            const matchTotal = parseInt(res.headers.get('X-Total-Matches'), 10);
+            const winsTotal  = parseInt(res.headers.get('X-Total-Wins'), 10);
 
             if (!matches.length) return;
 
             // Quick stats
-            const totalWins = matches.filter(m => { try { return JSON.parse(m.result).won; } catch(e) { return false; } }).length;
+            const totalWins = Number.isFinite(winsTotal) ? winsTotal : matches.filter(m => { try { return JSON.parse(m.result).won; } catch(e) { return false; } }).length;
+            const totalMatches = Number.isFinite(matchTotal) ? matchTotal : matches.length;
             const totalPtsWon  = matches.reduce((sum, m) => { try { const s = JSON.parse(m.stats); return sum + WIN_KEYS.reduce((a,k) => a+(s[k]||0), 0); } catch(e) { return sum; } }, 0);
             const totalPtsLost = matches.reduce((sum, m) => { try { const s = JSON.parse(m.stats); return sum + LOSS_KEYS.reduce((a,k) => a+(s[k]||0), 0); } catch(e) { return sum; } }, 0);
             const totalPts = totalPtsWon + totalPtsLost;
             const winRate  = totalPts > 0 ? Math.round((totalPtsWon / totalPts) * 100) + '%' : '—';
 
-            document.getElementById('h-total').textContent   = matches.length;
+            document.getElementById('h-total').textContent   = totalMatches;
             document.getElementById('h-wins').textContent    = totalWins;
             document.getElementById('h-winrate').textContent = winRate;
-            document.getElementById('home-sub').textContent  = `${matches.length} match${matches.length !== 1 ? 'es' : ''} played · ${totalWins} win${totalWins !== 1 ? 's' : ''}`;
+            document.getElementById('home-sub').textContent  = `${totalMatches} match${totalMatches !== 1 ? 'es' : ''} played · ${totalWins} win${totalWins !== 1 ? 's' : ''}`;
 
             // Last match card
             const m = matches[0];

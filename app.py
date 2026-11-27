@@ -62,6 +62,7 @@ limiter = Limiter(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH  = os.path.join(BASE_DIR, 'tennis.db')
+FREE_HISTORY_LIMIT = 3   # matches returned by the API on the free plan
 
 # Persist secret key across restarts so sessions survive
 _key_file = os.path.join(BASE_DIR, '.secret_key')
@@ -468,8 +469,26 @@ def get_matches():
         'WHERE user_id = ? ORDER BY id DESC',
         (session['user_id'],)
     ).fetchall()
+    user = conn.execute('SELECT is_premium FROM users WHERE id = ?', (session['user_id'],)).fetchone()
     conn.close()
-    return jsonify([dict(r) for r in rows])
+
+    total = len(rows)
+    wins = 0
+    for r in rows:
+        try:
+            if json.loads(r['result']).get('won'):
+                wins += 1
+        except Exception:
+            pass
+
+    # Free plan: only the most recent matches are returned (server-enforced)
+    if not user or not user['is_premium']:
+        rows = rows[:FREE_HISTORY_LIMIT]
+
+    resp = jsonify([dict(r) for r in rows])
+    resp.headers['X-Total-Matches'] = str(total)
+    resp.headers['X-Total-Wins'] = str(wins)
+    return resp
 
 
 @app.route('/api/matches/export', methods=['GET'])

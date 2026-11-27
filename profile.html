@@ -537,6 +537,8 @@
 
             const res     = await fetch('/api/matches');
             const matches = await res.json();
+            const serverTotal = parseInt(res.headers.get('X-Total-Matches'), 10);
+            const serverWins  = parseInt(res.headers.get('X-Total-Wins'), 10);
             window._profileMatches = matches;
             try { renderWinRateChart(matches); } catch (e) { var cs = document.getElementById('win-rate-chart-section'); if (cs) cs.style.display = 'none'; }
             const listEl  = document.getElementById('match-list');
@@ -551,15 +553,15 @@
             matches.forEach(m => {
                 try { if (JSON.parse(m.result).won) totalWins++; } catch (e) {}
             });
-            const n = matches.length;
+            const n = Number.isFinite(serverTotal) ? serverTotal : matches.length;
             document.getElementById('profile-summary').textContent =
-                `${n} match${n !== 1 ? 'es' : ''} · ${totalWins} win${totalWins !== 1 ? 's' : ''}`;
+                `${n} match${n !== 1 ? 'es' : ''} · ${Number.isFinite(serverWins) ? serverWins : totalWins} win${(Number.isFinite(serverWins) ? serverWins : totalWins) !== 1 ? 's' : ''}`;
 
             if (currentUser.is_premium) {
                 listEl.innerHTML = matches.map((m, i) => buildFullCard(m, i)).join('');
             } else {
                 const preview = matches.slice(0, FREE_HISTORY_LIMIT);
-                const locked  = matches.length - preview.length;
+                const locked  = n - preview.length;
                 let html = preview.map((m, i) => buildPreviewCard(m, i)).join('');
                 if (locked > 0) html += buildLockedCard(locked);
                 listEl.innerHTML = html;
