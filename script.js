@@ -876,7 +876,7 @@ async function renderInsights() {
 function switchView(view, force) {
   // Warn if user navigates away from tracker mid-match (not for programmatic calls)
   if (!force && matchStarted && !matchOver && view !== 'tracker') {
-    if (!confirm('You have a match in progress. Stats and Insights are still visible — your match will continue when you return to Tracker.')) return;
+    if (!confirm(t('You have a match in progress. Stats and Insights are still visible — your match will continue when you return to Tracker.'))) return;
   }
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -1513,7 +1513,7 @@ function showInitialStep() {
 
 // --- Reset ---
 function resetMatch() {
-  if (!confirm('Reset the match? All data will be lost.')) return;
+  if (!confirm(t('Reset the match? All data will be lost.'))) return;
   const saveBtn  = document.getElementById('save-btn');
   const notesEl  = document.getElementById('match-notes');
   if (saveBtn)  saveBtn.style.display  = 'none';

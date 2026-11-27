@@ -1485,3 +1485,9 @@ header::after {
 .auth-form .auth-error:empty, .settings-section .auth-error:empty { display: none; }
 .plan-drills { background: #fff !important; }
 .plan-session .drill-card { border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
+
+/* Language toggle */
+.lang-toggle{display:inline-flex;align-items:center;gap:0;border:1.5px solid var(--line,#eee4cf);border-radius:999px;background:#fff;padding:2px;font:600 12px/1 'DM Sans',sans-serif;cursor:pointer;color:#4f5a50;margin:0 8px}
+.lang-toggle span{padding:6px 9px;border-radius:999px}
+.lang-toggle span.on{background:#14513a;color:#faf3e4}
+.auth-lang{display:flex;justify-content:flex-end;margin-bottom:8px}

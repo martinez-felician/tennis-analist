@@ -224,6 +224,14 @@ def serve_css():
 def serve_js():
     return send_from_directory(BASE_DIR, 'script.js')
 
+@app.route('/i18n.js')
+def serve_i18n():
+    return send_from_directory(BASE_DIR, 'i18n.js')
+
+@app.route('/i18n-es.js')
+def serve_i18n_es():
+    return send_from_directory(BASE_DIR, 'i18n-es.js')
+
 @app.route('/manifest.json')
 def serve_manifest():
     return send_from_directory(BASE_DIR, 'manifest.json')

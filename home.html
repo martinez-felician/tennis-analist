@@ -15,6 +15,8 @@
     <meta name="apple-mobile-web-app-title" content="Tennis Analyst">
     <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon-180.png">
+    <script src="/i18n-es.js"></script>
+    <script src="/i18n.js"></script>
 </head>
 <body>
 
@@ -23,6 +25,7 @@
             <img src="/logo.svg" alt="" class="brand-logo">
             <span class="brand-name">Tennis Analyst</span>
         </div>
+        <span data-lang-slot></span>
         <div class="nav-dropdown">
             <button class="nav-dropdown-btn" onclick="toggleDropdown(event)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
             <div class="nav-dropdown-menu" id="nav-menu">

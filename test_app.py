@@ -755,3 +755,11 @@ class TestFreeHistoryLimit(BaseTestCase):
         conn.close()
         res = self.client.get('/api/matches')
         self.assertEqual(len(res.get_json()), 5)
+
+
+class TestI18nStatic(BaseTestCase):
+    def test_i18n_scripts_served(self):
+        for path in ('/i18n.js', '/i18n-es.js'):
+            r = self.client.get(path)
+            self.assertEqual(r.status_code, 200)
+            self.assertIn('javascript', r.content_type)

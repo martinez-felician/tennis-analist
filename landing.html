@@ -15,6 +15,9 @@
     <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon-180.png">
     <style>
+        .lang-toggle{display:inline-flex;align-items:center;border:1.5px solid #eee4cf;border-radius:999px;background:#fff;padding:2px;font:700 11px/1 'DM Sans',sans-serif;cursor:pointer;color:#4f5a50;margin:0 10px;gap:0}
+        .lang-toggle span{padding:6px 8px;border-radius:999px}
+        .lang-toggle span.on{background:#14513a;color:#faf3e4}
         :root {
             --green: #14513a; --green-dark: #0f3d2c; --clay: #b64a1c; --clay-light: #c5521f;
             --cream: #faf3e4; --line: #eee4cf; --ink: #0f3d2c; --dim: #4f5a50;
@@ -137,6 +140,8 @@
             .cta h2 { font-size: 3rem; }
         }
     </style>
+    <script src="/i18n-es.js"></script>
+    <script src="/i18n.js"></script>
 </head>
 <body>
 
@@ -148,6 +153,7 @@
                 <a href="#plans">Plans</a>
                 <a href="#install">Install</a>
             </nav>
+            <span data-lang-slot></span>
             <a href="/login" class="nav-login" id="nav-login">Log in</a>
         </div>
         <div class="stripes" aria-hidden="true"><i></i><i></i><i></i></div>
