@@ -12,3 +12,4 @@ tennis.db
 # Node/React
 node_modules/
 build/
+.vs/
