@@ -38,7 +38,7 @@
     <main class="view active profile-view">
 
         <div class="profile-header">
-            <img src="/logo.svg" alt="" class="profile-avatar-logo">
+            <div class="profile-avatar-circle" id="profile-avatar">?</div>
             <div style="flex:1">
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <h2 class="profile-name" id="profile-username">—</h2>
@@ -78,14 +78,14 @@
                     Manage Subscription
                 </button>
             </div>
-            <div id="match-list">
-                <p style="color:var(--text-dim); text-align:center; padding:2rem">Loading...</p>
-            </div>
-            <div class="chart-section" id="win-rate-chart-section" style="display:none; margin-top:1.5rem">
-                <h3 class="settings-title" style="margin-bottom:1rem">Win Rate Trend</h3>
+            <div class="chart-section" id="win-rate-chart-section" style="display:none; margin-bottom:1rem">
+                <h3 class="settings-title" style="margin-bottom:.6rem">Win rate trend</h3>
                 <div style="position:relative; height:220px">
                     <canvas id="win-rate-chart"></canvas>
                 </div>
+            </div>
+            <div id="match-list">
+                <p style="color:var(--text-dim); text-align:center; padding:2rem">Loading...</p>
             </div>
         </div>
 
@@ -242,6 +242,7 @@
                 okEl.textContent = 'Profile updated!';
                 currentUser = { ...currentUser, ...data };
                 document.getElementById('profile-username').textContent = data.username;
+                document.getElementById('profile-avatar').textContent = (data.username||'?').charAt(0).toUpperCase();
             } else {
                 errEl.textContent = data.error || 'Something went wrong.';
             }
@@ -414,11 +415,15 @@
             return `
                 <div class="match-history-card" onclick="openMatchModal(${idx})" style="cursor:pointer">
                     <div class="match-history-top">
-                        <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
-                        <span class="match-score">${score}</span>
-                        <span class="match-date">${date}</span>
+                        <div class="mh-left">
+                            <strong>vs ${escapeHtml(config.opponentName || 'Opponent')}</strong>
+                            <span class="match-date">${date}</span>
+                        </div>
+                        <div class="mh-right">
+                            <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
+                            <span class="match-score">${score}</span>
+                        </div>
                     </div>
-                    ${buildMatchMeta(config)}
                     <div class="match-history-bottom">
                         <span>Win rate <strong>${winRate}</strong></span>
                         <span>1st serve in <strong>${firstServePct}</strong></span>
@@ -459,11 +464,15 @@
             return `
                 <div class="match-history-card" onclick="openMatchModal(${idx})" style="cursor:pointer">
                     <div class="match-history-top">
-                        <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
-                        <span class="match-score">${score}</span>
-                        <span class="match-date">${date}</span>
+                        <div class="mh-left">
+                            <strong>vs ${escapeHtml(config.opponentName || 'Opponent')}</strong>
+                            <span class="match-date">${date}</span>
+                        </div>
+                        <div class="mh-right">
+                            <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
+                            <span class="match-score">${score}</span>
+                        </div>
                     </div>
-                    ${buildMatchMeta(config)}
                     <div class="match-history-bottom">
                         <span>Win rate <strong>${winRate}</strong></span>
                         <span>1st serve in <strong>${firstServePct}</strong></span>
@@ -497,6 +506,7 @@
             currentUser = await meRes.json();
 
             document.getElementById('profile-username').textContent = currentUser.username;
+            document.getElementById('profile-avatar').textContent = (currentUser.username||'?').charAt(0).toUpperCase();
 
             // Pre-fill settings form
             document.getElementById('s-username').value = currentUser.username   || '';
@@ -523,7 +533,7 @@
             const res     = await fetch('/api/matches');
             const matches = await res.json();
             window._profileMatches = matches;
-            try { renderWinRateChart(matches); } catch (e) { /* Chart.js not available */ }
+            try { renderWinRateChart(matches); } catch (e) { var cs = document.getElementById('win-rate-chart-section'); if (cs) cs.style.display = 'none'; }
             const listEl  = document.getElementById('match-list');
 
             if (!matches.length) {

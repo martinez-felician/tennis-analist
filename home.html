@@ -44,6 +44,7 @@
 
     <main class="home-page">
 
+        <div class="home-hero">
         <!-- Welcome -->
         <div class="home-welcome">
             <div>
@@ -62,6 +63,8 @@
             </div>
             <span class="home-cta-arrow"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
         </a>
+
+        </div>
 
         <!-- Quick stats -->
         <div class="home-stats-row" id="home-stats-row">
@@ -184,14 +187,14 @@
             document.getElementById('home-last-match').innerHTML = `
                 <div class="match-history-card">
                     <div class="match-history-top">
-                        <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
-                        <span class="match-score">${score}</span>
-                        <span class="match-date">${date}</span>
-                    </div>
-                    <div class="match-history-bottom">
-                        <span>Win rate <strong>${wr}</strong></span>
-                        <span>${config.playerName || 'Player'} vs ${config.opponentName || 'Opponent'}</span>
-                        <span>Best of ${config.sets || '?'}</span>
+                        <div class="mh-left">
+                            <strong>vs ${config.opponentName || 'Opponent'}</strong>
+                            <span class="match-date">${date}</span>
+                        </div>
+                        <div class="mh-right">
+                            <span class="match-result-badge ${won ? 'green' : 'red'}">${won ? 'Won' : 'Lost'}</span>
+                            <span class="match-score">${score}</span>
+                        </div>
                     </div>
                 </div>
             `;

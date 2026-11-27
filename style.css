@@ -1402,3 +1402,72 @@ header::after {
 /* Decorative background shapes from the old theme */
 .geo, .geo-bg { display: none; }
 @media (max-width: 480px) { .point-section .method-btn { font-size: 0.74rem; } .sb-pts { font-size: 2.4rem; } }
+
+/* ── HOME / PERFIL: bloques verdes con cancha (estilo L) ── */
+:root { --court-lines: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260' fill='none' stroke='%23ffffff' stroke-opacity='.13' stroke-width='2'%3E%3Cpath d='M0 46h400M0 214h400M200 46v168M90 20L70 240M310 20l20 220M30 120h340'/%3E%3C/svg%3E"); }
+.home-hero {
+    background: #14513a var(--court-lines) center/cover no-repeat;
+    border-radius: 28px; padding: 22px 20px 20px;
+    display: flex; flex-direction: column; gap: 18px;
+    box-shadow: 0 14px 28px -16px rgba(15,61,44,.5);
+}
+.home-hero .home-greeting { color: #fff; font-size: 1.9rem; line-height: 1.1; }
+.home-hero .home-sub { color: #f4e8d6; opacity: .85; }
+.home-hero .home-cta {
+    background: #b64a1c; box-shadow: none; border-radius: 999px;
+    padding: 16px 20px; justify-content: center; text-align: center;
+}
+.home-hero .home-cta::before { display: none; }
+.home-hero .home-cta-icon, .home-hero .home-cta-arrow, .home-hero .home-cta-text span { display: none; }
+.home-hero .home-cta-text { flex: none; align-items: center; }
+.home-hero .home-cta-text strong { color: #fff; font-size: 1.05rem; }
+.home-hero .premium-badge { background: #b64a1c; color: #fff; }
+
+.home-stats-row {
+    background: #fff; border-radius: 24px; padding: 18px 8px;
+    box-shadow: 0 1px 0 rgba(15,61,44,.05), 0 14px 28px -16px rgba(15,61,44,.35);
+    gap: 0;
+}
+.home-stat-card { background: none !important; border: 0 !important; box-shadow: none !important; transform: none !important; border-radius: 0; padding: 0 8px; }
+.home-stat-card + .home-stat-card { border-left: 1px solid #eee4cf !important; }
+.home-stat-num { font-family: 'DM Serif Display', serif; color: #0f3d2c !important; font-size: 2rem; }
+.home-stat-card:nth-child(2) .home-stat-num { color: #b64a1c !important; }
+
+.home-link-icon {
+    width: 42px; height: 42px; border-radius: 50%; background: #faf3e4; color: #b64a1c;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.home-link-icon svg { width: 20px; height: 20px; }
+.home-link-card { border-radius: 24px; }
+.home-link-arrow { color: #4f5a50; }
+
+.mh-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mh-left strong { color: #0f3d2c; font-size: 1.02rem; }
+.mh-left .match-date { margin: 0; font-size: .82rem; }
+.mh-right { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.match-history-top { justify-content: space-between; }
+.match-history-card { border-radius: 22px; padding: 14px 18px; gap: 8px; background: #fff; border: 0;
+    box-shadow: 0 1px 0 rgba(15,61,44,.05), 0 14px 28px -18px rgba(15,61,44,.35); }
+.match-history-card .match-meta, .match-history-card .match-history-bottom, .match-history-card .match-shot-breakdown { display: none; }
+.match-result-badge.green { background: #b64a1c; color: #fff; }
+.match-result-badge.red   { background: #14513a; color: #fff; }
+.match-score { color: #0f3d2c; font-weight: 700; letter-spacing: .02em; }
+
+.profile-header {
+    background: #14513a var(--court-lines) center/cover no-repeat !important;
+    border: 0 !important; border-radius: 28px; color: #fff;
+}
+.profile-header .profile-name { color: #fff; font-size: 1.6rem; }
+.profile-header .profile-sub { color: #f4e8d6; opacity: .85; }
+.profile-avatar-circle {
+    width: 56px; height: 56px; border-radius: 50%; background: #c5521f; color: #fff;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-family: 'DM Serif Display', serif; font-size: 1.8rem;
+}
+.profile-header .premium-badge { background: #b64a1c; color: #fff; }
+.profile-tabs { background: #f1e7d0; border-radius: 999px; padding: 4px; }
+.profile-header { margin: 0 0 4px !important; }
+.profile-tabs { display: flex; width: 100%; margin-top: 1rem !important; }
+.profile-tab { flex: 1; white-space: nowrap; }
+#win-rate-chart-section > div { height: 150px !important; }
+.profile-header { width: 100%; }
