@@ -781,8 +781,8 @@ async function renderInsights() {
       const res     = await fetch('/api/matches');
       const matches = await res.json();
       if (matches.length > 0) {
-        // Free users: last 2 matches; premium: all matches
-        const pool   = isPremium ? matches : matches.slice(0, 2);
+        // Free users: last 3 matches; premium: all matches
+        const pool   = isPremium ? matches : matches.slice(0, 3);
         const merged = {};
         pool.forEach(m => {
           try {

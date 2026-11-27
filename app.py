@@ -475,6 +475,11 @@ def get_matches():
 @app.route('/api/matches/export', methods=['GET'])
 @login_required
 def export_matches_csv():
+    conn = get_db()
+    user = conn.execute('SELECT is_premium FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    conn.close()
+    if not user or not user['is_premium']:
+        return jsonify({'error': 'Premium required'}), 403
     WIN_KEYS  = ['ace','fh-win','bh-win','vol','oh','drop','opp-err']
     LOSS_KEYS = ['df','fh-ue','bh-ue','fh-fe','bh-fe','opp-win','miss-return','vol-err','oh-err','drop-err']
     conn = get_db()

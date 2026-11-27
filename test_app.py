@@ -572,7 +572,19 @@ class TestExportCSV(BaseTestCase):
     def setUp(self):
         super().setUp()
         self._register()
+        conn = flask_app.get_db()
+        conn.execute("UPDATE users SET is_premium=1, subscription_status='active' WHERE email='test@example.com'")
+        conn.commit()
+        conn.close()
         self._login()
+
+    def test_export_csv_requires_premium(self):
+        conn = flask_app.get_db()
+        conn.execute("UPDATE users SET is_premium=0 WHERE email='test@example.com'")
+        conn.commit()
+        conn.close()
+        res = self.client.get('/api/matches/export')
+        self.assertEqual(res.status_code, 403)
 
     def test_export_csv_requires_auth(self):
         self.client.post('/api/auth/logout')

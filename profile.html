@@ -71,7 +71,8 @@
         <!-- Match History Tab -->
         <div id="tab-history" style="margin-top:1rem">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; gap:0.5rem; flex-wrap:wrap">
-                <button class="manage-sub-btn" id="export-csv-btn" onclick="exportCSV()">Export CSV</button>
+                <button class="manage-sub-btn" id="export-csv-btn" style="display:none" onclick="exportCSV()">Export CSV</button>
+                <button class="manage-sub-btn" id="export-csv-locked-btn" style="display:none; opacity:0.5; cursor:default" onclick="showAlltimeUpgradePrompt('CSV exports')" title="Premium feature"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg> Export CSV</button>
                 <button class="manage-sub-btn" id="export-alltime-btn" style="display:none" onclick="exportAlltimeStats()">Export All-Time Stats</button>
                 <button class="manage-sub-btn" id="export-alltime-locked-btn" style="display:none; opacity:0.5; cursor:default" onclick="showAlltimeUpgradePrompt()" title="Premium feature">&#128274; Export All-Time Stats</button>
                 <button class="manage-sub-btn" id="manage-sub-btn" style="display:none" onclick="manageSubscription()">
@@ -297,6 +298,8 @@
             }
         }
 
+        const FREE_HISTORY_LIMIT = 3;
+
         function exportCSV() {
             const btn = document.getElementById('export-csv-btn');
             btn.disabled = true;
@@ -313,8 +316,8 @@
             setTimeout(() => { btn.disabled = false; btn.textContent = 'Export All-Time Stats'; }, 2000);
         }
 
-        function showAlltimeUpgradePrompt() {
-            alert('This feature is available to Premium subscribers. Upgrade to access all-time stats exports.');
+        function showAlltimeUpgradePrompt(what) {
+            alert('This feature is available to Premium subscribers. Upgrade to access ' + (typeof what === 'string' ? what : 'all-time stats exports') + '.');
         }
 
         let _winRateChartInstance = null;
@@ -517,11 +520,13 @@
                 document.getElementById('premium-badge').style.display       = 'inline-flex';
                 document.getElementById('manage-sub-btn').style.display      = 'inline-block';
                 document.getElementById('export-alltime-btn').style.display  = 'inline-block';
+                document.getElementById('export-csv-btn').style.display      = 'inline-block';
                 document.getElementById('sub-premium').style.display         = 'block';
             } else {
                 document.getElementById('upgrade-banner').style.display          = 'flex';
                 document.getElementById('sub-free').style.display                = 'block';
                 document.getElementById('export-alltime-locked-btn').style.display = 'inline-block';
+                document.getElementById('export-csv-locked-btn').style.display = 'inline-block';
             }
 
             // Show success banner if redirected from Stripe
@@ -553,7 +558,7 @@
             if (currentUser.is_premium) {
                 listEl.innerHTML = matches.map((m, i) => buildFullCard(m, i)).join('');
             } else {
-                const preview = matches.slice(0, 2);
+                const preview = matches.slice(0, FREE_HISTORY_LIMIT);
                 const locked  = matches.length - preview.length;
                 let html = preview.map((m, i) => buildPreviewCard(m, i)).join('');
                 if (locked > 0) html += buildLockedCard(locked);

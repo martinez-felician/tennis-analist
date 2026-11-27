@@ -134,7 +134,7 @@ def seed_matches(user_id, player_name, skill, count):
     # Remove old seeded matches for this user so re-runs are idempotent
     conn.execute('DELETE FROM matches WHERE user_id=?', (user_id,))
     conn.commit()
-    for i in range(count):
+    for i in reversed(range(count)):  # oldest first, so the newest match gets the highest id
         m = rand_match(player_name, skill, days_ago=i * 6 + random.randint(0, 5))
         conn.execute(
             'INSERT INTO matches (user_id, config, stats, result, played_at) VALUES (?,?,?,?,?)',
